@@ -40,17 +40,20 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-3">
             {mounted && (
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Ena Pragma"
+                alt="Pragma Score"
                 width={120}
                 height={40}
                 className="h-8 w-auto"
                 priority
               />
             )}
+            <span className="text-xl font-bold text-gray-900 dark:text-white">
+              Pragma Score
+            </span>
           </Link>
 
           {/* Desktop Navigation */}

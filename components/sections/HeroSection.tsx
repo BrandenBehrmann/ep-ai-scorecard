@@ -23,7 +23,7 @@ export function HeroSection() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/30 rounded-full text-amber-800 dark:text-amber-400 text-sm font-medium mb-8">
             <Clock className="w-4 h-4" />
-            25-Minute Diagnostic
+            30-Minute Diagnostic
           </div>
 
           {/* Headline */}
@@ -45,17 +45,17 @@ export function HeroSection() {
           <div className="flex flex-wrap items-center justify-center gap-6 mb-10 text-sm text-gray-500 dark:text-white/50">
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-amber-600" />
-              30 strategic questions
+              36 strategic questions
             </span>
             <span className="w-1 h-1 bg-gray-400 rounded-full hidden sm:block" />
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-amber-600" />
-              5 dimensions measured
+              6 dimensions measured
             </span>
             <span className="w-1 h-1 bg-gray-400 rounded-full hidden sm:block" />
             <span className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-amber-600" />
-              Instant AI-powered insights
+              AI-powered insights + budget planning
             </span>
           </div>
 
