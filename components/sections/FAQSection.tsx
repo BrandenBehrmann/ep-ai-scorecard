@@ -19,15 +19,15 @@ const faqs = [
   },
   {
     question: 'How long does the assessment take?',
-    answer: "About 25 minutes. It's 30 questions across 5 dimensions. Take your time—the more honest and detailed your responses, the more valuable your insights.",
+    answer: "About 30 minutes. It's 36 questions across 6 dimensions, including AI Investment. Take your time—the more honest and detailed your responses, the more valuable your insights.",
   },
   {
     question: 'What happens after I get my report?',
     answer: "You'll have the option to book a complimentary 30-minute strategy session to discuss findings and next steps. No obligation, no pressure.",
   },
   {
-    question: 'Is this about AI?',
-    answer: "No. This is about operational fundamentals—control, clarity, leverage. AI may be part of the solution, but only after the foundation is clear. We measure your AI-readiness, not sell you AI.",
+    question: 'Why does the assessment include AI budgeting questions?',
+    answer: "Most businesses underestimate AI implementation costs. Our AI Investment dimension helps you understand your current spend, budget readiness, and identifies potential hidden costs before you invest. It's what sets this assessment apart.",
   },
   {
     question: 'Can my team take this assessment?',

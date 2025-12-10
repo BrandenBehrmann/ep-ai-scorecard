@@ -14,7 +14,7 @@ const steps = [
     icon: ClipboardList,
     step: '02',
     title: 'Complete the Diagnostic',
-    description: 'Answer 30 questions across 5 operational dimensions. Be honest—the value is in the accuracy. Your responses are confidential.',
+    description: 'Answer 36 questions across 6 operational dimensions, including AI Investment readiness. Be honest—the value is in the accuracy.',
   },
   {
     icon: FileText,
