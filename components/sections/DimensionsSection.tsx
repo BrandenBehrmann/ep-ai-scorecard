@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gauge, Eye, Zap, Target, RefreshCw } from 'lucide-react';
+import { Gauge, Eye, Zap, Target, RefreshCw, Calculator } from 'lucide-react';
 
 const dimensions = [
   {
@@ -39,6 +39,13 @@ const dimensions = [
     detail: 'Gauges implementation history, team attitude, and ability to act on improvements.',
     color: 'from-lime-500 to-green-500',
   },
+  {
+    icon: Calculator,
+    title: 'AI Investment',
+    description: 'Your readiness to budget and track AI implementation costs',
+    detail: 'Assesses spend awareness, budget allocation, cost forecasting, and ROI tracking.',
+    color: 'from-teal-500 to-cyan-500',
+  },
 ];
 
 export function DimensionsSection() {
@@ -56,8 +63,8 @@ export function DimensionsSection() {
             What We Measure
           </h2>
           <p className="text-lg text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
-            Your operational health is scored across five critical dimensions,
-            each contributing 20 points to your total 0-100 score.
+            Your operational health is scored across six critical dimensions,
+            including AI Investment readiness—giving you the complete picture.
           </p>
         </motion.div>
 
