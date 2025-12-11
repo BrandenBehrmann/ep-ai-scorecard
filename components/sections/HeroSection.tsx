@@ -68,13 +68,18 @@ export function HeroSection() {
               Start Your Assessment
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <a
-              href="#how-it-works"
-              className="inline-flex items-center gap-2 px-6 py-4 text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+            <Link
+              href="/assessment/demo"
+              className="inline-flex items-center gap-2 px-6 py-4 border border-purple-300 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 font-medium rounded-xl transition-all"
             >
-              Learn how it works
-            </a>
+              Try Demo Free
+            </Link>
           </div>
+          <p className="mt-4 text-sm text-gray-500 dark:text-white/50">
+            <a href="#how-it-works" className="hover:text-amber-600 transition-colors">
+              Learn how it works →
+            </a>
+          </p>
         </motion.div>
       </div>
     </section>

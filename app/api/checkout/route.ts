@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createServerClient } from '@/lib/supabase';
+import { randomUUID } from 'crypto';
 
 // Lazy-initialize Stripe to avoid build-time errors
 let _stripe: Stripe | null = null;
@@ -59,10 +60,12 @@ export async function POST(request: NextRequest) {
 
     // Create assessment record in Supabase
     const supabase = createServerClient();
+    const token = randomUUID();
     const { error: dbError } = await supabase.from('assessments').insert({
       name,
       email,
       company,
+      token,
       phone: phone || null,
       status: 'not_started',
       current_step: 0,

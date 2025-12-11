@@ -14,7 +14,7 @@ export async function GET(
     const { data: assessment, error } = await supabase
       .from('assessments')
       .select('*')
-      .eq('id', token)
+      .eq('token', token)
       .single();
 
     if (error || !assessment) {
@@ -78,7 +78,7 @@ export async function PATCH(
     const { data: assessment, error } = await supabase
       .from('assessments')
       .update(updateData)
-      .eq('id', token)
+      .eq('token', token)
       .select()
       .single();
 

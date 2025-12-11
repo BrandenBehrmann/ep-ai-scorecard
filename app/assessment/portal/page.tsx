@@ -15,7 +15,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { assessmentSections } from '@/lib/assessment-questions';
 
 // Portal status types
-type PortalStatus = 'not_started' | 'in_progress' | 'submitted' | 'report_ready';
+type PortalStatus = 'not_started' | 'in_progress' | 'pending_review' | 'submitted' | 'report_ready' | 'released';
 
 // Assessment data from API
 interface AssessmentData {
@@ -65,7 +65,7 @@ function AssessmentPortal() {
   const [responses, setResponses] = useState<Record<string, string | string[] | number>>({});
   const [saving, setSaving] = useState(false);
 
-  // Fetch assessment data
+  // Fetch assessment data from API
   useEffect(() => {
     setMounted(true);
 
@@ -81,6 +81,16 @@ function AssessmentPortal() {
         const data = await res.json();
 
         if (!res.ok) {
+          // Fallback to localStorage if API fails
+          const localData = localStorage.getItem('pragma-assessment');
+          if (localData) {
+            const parsed = JSON.parse(localData);
+            setAssessmentData(parsed);
+            setCurrentStep(parsed.current_step || 0);
+            setResponses(parsed.responses || {});
+            setLoading(false);
+            return;
+          }
           setError(data.error || 'Assessment not found');
           setLoading(false);
           return;
@@ -92,6 +102,16 @@ function AssessmentPortal() {
         setResponses(assessment.responses || {});
         setLoading(false);
       } catch {
+        // Fallback to localStorage if API fails
+        const localData = localStorage.getItem('pragma-assessment');
+        if (localData) {
+          const parsed = JSON.parse(localData);
+          setAssessmentData(parsed);
+          setCurrentStep(parsed.current_step || 0);
+          setResponses(parsed.responses || {});
+          setLoading(false);
+          return;
+        }
         setError('Failed to load assessment');
         setLoading(false);
       }
@@ -105,6 +125,7 @@ function AssessmentPortal() {
     if (!token) return;
 
     setSaving(true);
+
     try {
       await fetch(`/api/assessments/${token}`, {
         method: 'PATCH',
@@ -115,8 +136,25 @@ function AssessmentPortal() {
           status: 'in_progress'
         })
       });
+
+      // Also update localStorage as backup
+      const localData = {
+        ...assessmentData,
+        responses: newResponses,
+        current_step: newStep !== undefined ? newStep : currentStep,
+        status: 'in_progress'
+      };
+      localStorage.setItem('pragma-assessment', JSON.stringify(localData));
     } catch (err) {
       console.error('Failed to save responses:', err);
+      // Save to localStorage as fallback
+      const localData = {
+        ...assessmentData,
+        responses: newResponses,
+        current_step: newStep !== undefined ? newStep : currentStep,
+        status: 'in_progress'
+      };
+      localStorage.setItem('pragma-assessment', JSON.stringify(localData));
     }
     setSaving(false);
   };
@@ -136,28 +174,38 @@ function AssessmentPortal() {
 
   // Handle assessment submission
   const handleSubmit = async () => {
-    if (token) {
-      setSaving(true);
-      try {
-        const res = await fetch(`/api/assessments/${token}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            responses,
-            current_step: assessmentSections.length,
-            status: 'submitted'
-          })
-        });
+    if (!token) return;
 
-        if (res.ok) {
-          router.push(`/assessment/report?token=${token}`);
-          return;
-        }
-      } catch (err) {
-        console.error('Failed to submit assessment:', err);
+    setSaving(true);
+
+    try {
+      const res = await fetch(`/api/assessments/${token}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          responses,
+          current_step: assessmentSections.length,
+          status: 'pending_review' // Changed: Hold for EP team review before customer sees report
+        })
+      });
+
+      if (res.ok) {
+        // Update localStorage
+        const localData = {
+          ...assessmentData,
+          responses,
+          current_step: assessmentSections.length,
+          status: 'pending_review'
+        };
+        localStorage.setItem('pragma-assessment', JSON.stringify(localData));
+        // Redirect to thank you page instead of report
+        router.push(`/assessment/submitted?token=${token}`);
+        return;
       }
-      setSaving(false);
+    } catch (err) {
+      console.error('Failed to submit assessment:', err);
     }
+    setSaving(false);
   };
 
   // Response handlers
@@ -194,8 +242,8 @@ function AssessmentPortal() {
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Assessment Not Found</h1>
           <p className="text-gray-600 dark:text-white/70 mb-6">{error}</p>
-          <a href="/" className="px-6 py-3 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all inline-block">
-            Return Home
+          <a href="/assessment/demo" className="px-6 py-3 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all inline-block">
+            Start New Assessment
           </a>
         </div>
       </div>
@@ -509,10 +557,10 @@ function AssessmentPortal() {
                     {saving ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Submitting...
+                        Generating Report...
                       </>
                     ) : (
-                      'Submit Assessment'
+                      'Submit & View Report'
                     )}
                   </button>
                 ) : (
