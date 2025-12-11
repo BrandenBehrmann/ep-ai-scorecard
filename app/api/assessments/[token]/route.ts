@@ -54,8 +54,8 @@ export async function PATCH(
     if (body.status !== undefined) {
       updateData.status = body.status;
 
-      // Calculate scores when submitting
-      if (body.status === 'submitted' && body.responses) {
+      // Calculate scores when submitting (either submitted or pending_review)
+      if ((body.status === 'submitted' || body.status === 'pending_review') && body.responses) {
         const scores = calculateScores(body.responses);
         updateData.scores = {
           total: scores.totalScore,
