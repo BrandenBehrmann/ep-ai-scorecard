@@ -500,7 +500,7 @@ function ReportContent() {
         {/* ============================================================ */}
         {/* SECTION 5: FINANCIAL IMPACT */}
         {/* ============================================================ */}
-        {insights?.financialImpact && insights.financialImpact.totalAnnualWaste > 0 && (
+        {insights?.financialImpact && insights.financialImpact.totalOpportunityCost > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -521,7 +521,7 @@ function ReportContent() {
             <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 mb-6 text-center">
               <div className="text-sm text-red-600 dark:text-red-400 font-medium mb-1">Estimated Annual Impact</div>
               <div className="text-4xl font-bold text-red-700 dark:text-red-400">
-                ${insights.financialImpact.totalAnnualWaste.toLocaleString()}
+                ${insights.financialImpact.totalOpportunityCost.toLocaleString()}
               </div>
             </div>
 
@@ -532,30 +532,26 @@ function ReportContent() {
                   <div className="flex justify-between items-start mb-2">
                     <span className="font-medium text-gray-900 dark:text-white">{calc.item}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      calc.confidence === 'high' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                      calc.confidence === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                      calc.basis === 'from-your-answers' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      calc.basis === 'industry-average' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                       'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                     }`}>
-                      {calc.confidence} confidence
+                      {calc.basis === 'from-your-answers' ? 'Your Data' :
+                       calc.basis === 'industry-average' ? 'Industry Avg' : 'Conservative'}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-600 dark:text-white/60 font-mono">{calc.calculation}</div>
-                  <div className="text-lg font-semibold text-red-600 dark:text-red-400 mt-1">
+                  <div className="text-sm text-gray-700 dark:text-white/70 mb-1">{calc.yourData}</div>
+                  <div className="text-sm text-gray-600 dark:text-white/60 font-mono bg-gray-100 dark:bg-white/10 px-2 py-1 rounded">{calc.calculation}</div>
+                  <div className="text-lg font-semibold text-red-600 dark:text-red-400 mt-2">
                     ${calc.annualImpact.toLocaleString()}/year
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Assumptions */}
-            <div className="text-sm text-gray-500 dark:text-white/50 border-t border-gray-200 dark:border-white/10 pt-4">
-              <p className="font-medium mb-2">Assumptions:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {insights.financialImpact.assumptions.map((assumption, i) => (
-                  <li key={i}>{assumption}</li>
-                ))}
-              </ul>
-              <p className="mt-3 italic">{insights.financialImpact.conservativeNote}</p>
+            {/* Bottom Line */}
+            <div className="text-sm text-gray-600 dark:text-white/60 border-t border-gray-200 dark:border-white/10 pt-4">
+              <p className="italic">{insights.financialImpact.bottomLine}</p>
             </div>
           </motion.section>
         )}
@@ -589,21 +585,26 @@ function ReportContent() {
                 <div className="space-y-4">
                   {insights.actionPlan.thisWeek.map((action, i) => (
                     <div key={i} className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border-l-4 border-green-500">
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{action.action}</h4>
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{action.action}</h4>
+                        {action.canEPDoThis && (
+                          <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">EP Can Build</span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600 dark:text-white/70 mb-3">{action.why}</p>
                       <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-white/50 mb-3">
                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {action.timeRequired}</span>
                         <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> {action.cost}</span>
                       </div>
                       <div className="bg-white/60 dark:bg-black/20 rounded p-3">
-                        <div className="text-xs font-medium text-gray-700 dark:text-white/70 mb-2">How to do it:</div>
+                        <div className="text-xs font-medium text-gray-700 dark:text-white/70 mb-2">Steps:</div>
                         <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600 dark:text-white/60">
-                          {action.howTo.map((step, j) => <li key={j}>{step}</li>)}
+                          {action.steps.map((step, j) => <li key={j}>{step}</li>)}
                         </ol>
                       </div>
                       <div className="mt-3 text-sm">
-                        <span className="text-gray-500 dark:text-white/50">Expected result: </span>
-                        <span className="text-gray-900 dark:text-white">{action.expectedResult}</span>
+                        <span className="text-gray-500 dark:text-white/50">Result: </span>
+                        <span className="text-gray-900 dark:text-white">{action.result}</span>
                       </div>
                     </div>
                   ))}
@@ -613,14 +614,19 @@ function ReportContent() {
 
             {/* This Month */}
             {insights.actionPlan.thisMonth.length > 0 && (
-              <div className="mb-6">
+              <div>
                 <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Calendar className="w-4 h-4" /> This Month
                 </h3>
                 <div className="space-y-3">
                   {insights.actionPlan.thisMonth.map((action, i) => (
                     <div key={i} className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border-l-4 border-amber-500">
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-1">{action.action}</h4>
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{action.action}</h4>
+                        {action.canEPDoThis && (
+                          <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">EP Can Build</span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600 dark:text-white/70">{action.why}</p>
                       <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-white/50 mt-2">
                         <span><Clock className="w-3 h-3 inline mr-1" />{action.timeRequired}</span>
@@ -631,28 +637,13 @@ function ReportContent() {
                 </div>
               </div>
             )}
-
-            {/* Dependencies */}
-            {insights.actionPlan.dependencies.length > 0 && (
-              <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-white/70 mb-2">Important: Order Matters</h4>
-                <ul className="space-y-1">
-                  {insights.actionPlan.dependencies.map((dep, i) => (
-                    <li key={i} className="text-sm text-gray-600 dark:text-white/60 flex items-start gap-2">
-                      <ArrowRight className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                      {dep}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </motion.section>
         )}
 
         {/* ============================================================ */}
-        {/* SECTION 7: RECOMMENDED TOOLS */}
+        {/* SECTION 7: WHAT EP CAN BUILD FOR YOU */}
         {/* ============================================================ */}
-        {insights?.toolStack && insights.toolStack.length > 0 && (
+        {insights?.epImplementations && insights.epImplementations.length > 0 && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -660,30 +651,35 @@ function ReportContent() {
             className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
-                <Wrench className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                <Wrench className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recommended Tools</h2>
-                <p className="text-sm text-gray-500 dark:text-white/50">Specific solutions for your problems</p>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">What EP Can Build For You</h2>
+                <p className="text-sm text-gray-500 dark:text-white/50">We implement, you focus on your business</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              {insights.toolStack.map((tool, i) => (
-                <div key={i} className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">{tool.tool}</h4>
-                    <span className="text-sm font-medium text-green-600 dark:text-green-400">{tool.monthlyPrice}</span>
+              {insights.epImplementations.map((impl, i) => (
+                <div key={i} className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border-l-4 border-purple-500">
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{impl.title}</h4>
+                  <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">What We Build:</div>
+                      <p className="text-gray-700 dark:text-white/80">{impl.whatEPBuilds}</p>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">Your Problem:</div>
+                      <p className="text-gray-700 dark:text-white/80 italic">&ldquo;{impl.yourProblem}&rdquo;</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-white/70 mb-3">{tool.whyThisTool}</p>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-3 mb-2">
-                    <div className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Get Started:</div>
-                    <p className="text-sm text-gray-700 dark:text-white/80">{tool.setupInstructions}</p>
+                  <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+                    <div className="flex flex-wrap justify-between gap-2 text-sm">
+                      <span className="text-gray-600 dark:text-white/70"><strong>Outcome:</strong> {impl.outcome}</span>
+                      <span className="text-gray-500 dark:text-white/50">{impl.timeframe} • {impl.investmentRange}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-white/50">
-                    <span className="font-medium">Budget alternative:</span> {tool.alternative}
-                  </p>
                 </div>
               ))}
             </div>
@@ -704,25 +700,28 @@ function ReportContent() {
             <p className="text-white/70 mb-6">Choose what fits your situation.</p>
 
             <div className="grid md:grid-cols-3 gap-4">
-              {/* Option A */}
+              {/* DIY */}
               <div className="bg-white/10 rounded-lg p-5">
-                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.optionA.name}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.optionA.description}</p>
-                <p className="text-white/50 text-xs">{insights.nextSteps.optionA.whoItsFor}</p>
+                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.diy.title}</div>
+                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.diy.description}</p>
+                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.diy.forYouIf}</p>
+                <p className="text-white/40 text-xs">{insights.nextSteps.diy.epRole}</p>
               </div>
 
-              {/* Option B */}
-              <div className="bg-amber-600/20 border border-amber-500/30 rounded-lg p-5">
-                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.optionB.name}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.optionB.description}</p>
-                <p className="text-white/50 text-xs">{insights.nextSteps.optionB.whoItsFor}</p>
+              {/* Jumpstart - highlighted */}
+              <div className="bg-purple-600/20 border border-purple-500/30 rounded-lg p-5">
+                <div className="text-purple-400 font-bold text-lg mb-2">{insights.nextSteps.jumpstart.title}</div>
+                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.jumpstart.description}</p>
+                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.jumpstart.forYouIf}</p>
+                <p className="text-purple-400 text-sm font-medium">{insights.nextSteps.jumpstart.investment}</p>
               </div>
 
-              {/* Option C */}
+              {/* Partnership */}
               <div className="bg-white/10 rounded-lg p-5">
-                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.optionC.name}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.optionC.description}</p>
-                <p className="text-white/50 text-xs">{insights.nextSteps.optionC.whoItsFor}</p>
+                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.partnership.title}</div>
+                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.partnership.description}</p>
+                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.partnership.forYouIf}</p>
+                <p className="text-amber-400 text-sm font-medium">{insights.nextSteps.partnership.investment}</p>
               </div>
             </div>
 
