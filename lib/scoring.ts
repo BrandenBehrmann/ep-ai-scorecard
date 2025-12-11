@@ -1,4 +1,7 @@
 // lib/scoring.ts
+// Pragma Score - Scoring Logic
+// December 2025 - Updated for new question structure
+
 export interface DimensionScore {
   dimension: string;
   label: string;
@@ -19,29 +22,33 @@ export interface ScorecardResult {
   strengths: string[];
 }
 
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
 // Scale questions: some need inversion (higher number = worse situation)
+// ONLY for scored dimensions (control, clarity, leverage, friction, change-readiness)
 const scaleQuestionConfig: Record<string, { invert: boolean }> = {
   // Control
-  'control-2': { invert: false },
-  'control-4': { invert: true },
-  'control-6': { invert: true },
+  'control-2': { invert: false }, // More documented = better
+  'control-4': { invert: true },  // More approval needed = worse
   // Clarity
-  'clarity-3': { invert: true },
-  'clarity-6': { invert: true },
+  'clarity-3': { invert: true },  // Longer to answer = worse
+  'clarity-5': { invert: true },  // Blindsided often = worse
   // Leverage
-  'leverage-2': { invert: true },
-  'leverage-6': { invert: false },
+  'leverage-1': { invert: true },  // More time on cheap tasks = worse
+  'leverage-3': { invert: true },  // More reactive = worse
   // Friction
-  'friction-2': { invert: true },
-  'friction-6': { invert: true },
+  'friction-2': { invert: true },  // More double entry = worse
   // Change Readiness
-  'change-3': { invert: false },
-  // AI Investment (NEW)
-  'ai-invest-4': { invert: false },
+  'change-3': { invert: false },   // More eager = better
+  // Tech Stack
+  'tech-4': { invert: false },     // More integrated = better (but not scored)
 };
 
 // Select questions mapped to scores (1-5)
 const selectScoreMap: Record<string, Record<string, number>> = {
+  // Control
   'control-3': {
     'Less than 1 week': 5,
     '1-4 weeks': 4,
@@ -50,35 +57,21 @@ const selectScoreMap: Record<string, Record<string, number>> = {
     'More than 6 months': 1,
     'We might not recover': 0,
   },
+  // Clarity
   'clarity-1': {
     'Yes, within 5%': 5,
     'Roughly, within 20%': 4,
     "I'd need to check": 3,
-    "I'm not sure where to look": 2,
-    "We don't track this in real-time": 1,
+    "I'm not sure where to look": 1,
   },
-  'leverage-1': {
-    'Over $500K/employee': 5,
-    '$200K-$500K/employee': 4,
-    '$100K-$200K/employee': 3,
-    '$50K-$100K/employee': 2,
-    'Under $50K/employee': 1,
-    "I don't know": 2,
-  },
-  'leverage-4': {
-    'Mostly strategic work': 5,
-    '30% operations, 70% strategic': 4,
-    '50/50 split': 3,
-    '70% operations, 30% strategic': 2,
-    '90%+ in daily operations': 1,
-  },
+  // Friction
   'friction-3': {
     'Less than 1 week': 5,
     '1-2 weeks': 4,
     '1 month': 3,
     '2-3 months': 2,
     'More than 3 months': 1,
-    "We don't have a clear onboarding process": 1,
+    'No clear onboarding process': 1,
   },
   'friction-5': {
     'Less than 1 hour': 5,
@@ -86,114 +79,105 @@ const selectScoreMap: Record<string, Record<string, number>> = {
     '3-5 hours': 3,
     '5-10 hours': 2,
     'More than 10 hours': 1,
-    'I have no idea': 2,
+    'No idea': 2,
   },
+  // Change Readiness
   'change-1': {
-    'Within the last 3 months': 5,
+    'Within 3 months': 5,
     '3-6 months ago': 4,
     '6-12 months ago': 3,
     '1-2 years ago': 2,
-    'More than 2 years ago': 1,
-    "We've never successfully implemented a major change": 0,
+    'More than 2 years': 1,
+    'Never successfully': 0,
   },
   'change-4': {
-    'Yes - dedicated person/role': 5,
-    'Partially - someone does it part-time': 4,
-    'It falls on me (the owner)': 3,
-    'We outsource this entirely': 3,
-    'No - no clear owner': 1,
+    'Me (the owner) - it always falls on me': 2,
+    'A dedicated ops/admin person': 5,
+    "We'd need to hire someone": 2,
+    "We'd want help implementing": 4,
+    "No one - that's why things don't change": 1,
   },
   'change-6': {
-    "Immediately - we're ready": 5,
+    'Immediately - ready to go': 5,
     'Within a month': 4,
     'Within a quarter': 3,
     '6+ months - need to plan/budget': 2,
-    'Not sure - depends on many factors': 2,
-  },
-  // AI Investment (NEW)
-  'ai-invest-1': {
-    'Yes, we have detailed tracking': 5,
-    'Partially - we know roughly what we spend': 3,
-    "No, it's bundled with other software costs": 2,
-    "We don't use any AI/automation tools yet": 1,
-  },
-  'ai-invest-2': {
-    "$0 - We don't use AI tools yet": 2,
-    'Under $500/month': 3,
-    '$500-$2,000/month': 4,
-    '$2,000-$10,000/month': 5,
-    'Over $10,000/month': 5,
-    "I don't know": 1,
-  },
-  'ai-invest-3': {
-    'Yes, with approved budget for this year': 5,
-    "We're planning to allocate budget next quarter": 4,
-    'It comes from general IT/operations budget': 3,
-    'We evaluate AI spending case-by-case': 2,
-    'No dedicated budget': 1,
-  },
-  'ai-invest-5': {
-    'Yes, we have detailed cost projections': 5,
-    'We have rough estimates': 3,
-    "We've researched but haven't estimated our specific costs": 2,
-    "Not yet - we don't know where to start": 1,
+    'Honestly? Probably never': 1,
   },
 };
 
-// Multiselect scoring
+// ============================================================================
+// SCORING FUNCTIONS
+// ============================================================================
+
+// Multiselect scoring for clarity-4 (where data lives)
 function scoreMultiselect(questionId: string, answers: string[]): number {
-  if (questionId === 'clarity-5') {
+  if (questionId === 'clarity-4') {
     let score = 3;
-    if (answers.includes('One centralized system')) score += 2;
-    if (answers.includes('CRM system') || answers.includes('ERP/business software')) score += 1;
+    if (answers.includes('CRM/Business software')) score += 1.5;
     if (answers.includes('Spreadsheets')) score -= 0.5;
     if (answers.includes('Email threads')) score -= 1;
     if (answers.includes('Paper/physical files')) score -= 1;
-    if (answers.includes('Employee knowledge (not written)')) score -= 1;
-    if (answers.includes('Multiple disconnected tools')) score -= 1;
+    if (answers.includes('Employee knowledge (not written)')) score -= 1.5;
+    if (answers.includes('Multiple disconnected tools')) score -= 0.5;
     return Math.max(1, Math.min(5, Math.round(score)));
   }
-  return 3;
+  // Other multiselects (sales-1, tech-1) are not scored - they're context
+  return 0;
 }
 
-function getDimension(questionId: string): string {
+// Determine which dimension a question belongs to
+// Returns null for non-scored sections (profile, sales, tech-stack, vision)
+function getDimension(questionId: string): string | null {
   if (questionId.startsWith('control')) return 'control';
   if (questionId.startsWith('clarity')) return 'clarity';
   if (questionId.startsWith('leverage')) return 'leverage';
   if (questionId.startsWith('friction')) return 'friction';
   if (questionId.startsWith('change')) return 'change-readiness';
-  if (questionId.startsWith('ai-invest')) return 'ai-investment';
-  return 'unknown';
+  // profile, sales, tech, vision are NOT scored dimensions
+  return null;
 }
+
+// ============================================================================
+// MAIN SCORING FUNCTION
+// ============================================================================
 
 export function calculateScores(
   responses: Record<string, string | string[] | number>
 ): ScorecardResult {
+  // Only 5 scored dimensions now (removed ai-investment, added better coverage)
   const dimensionScores: Record<string, { total: number; count: number }> = {
     'control': { total: 0, count: 0 },
     'clarity': { total: 0, count: 0 },
     'leverage': { total: 0, count: 0 },
     'friction': { total: 0, count: 0 },
     'change-readiness': { total: 0, count: 0 },
-    'ai-investment': { total: 0, count: 0 },
   };
 
   for (const [questionId, value] of Object.entries(responses)) {
     const dimension = getDimension(questionId);
-    if (dimension === 'unknown') continue;
+    if (dimension === null) continue; // Skip non-scored sections
 
     let score: number | null = null;
 
+    // Scale questions (1-5 sliders)
     if (typeof value === 'number' && scaleQuestionConfig[questionId]) {
       const config = scaleQuestionConfig[questionId];
       score = config.invert ? (6 - value) : value;
-    } else if (typeof value === 'string' && selectScoreMap[questionId]) {
+    }
+    // Select questions with defined mappings
+    else if (typeof value === 'string' && selectScoreMap[questionId]) {
       score = selectScoreMap[questionId][value] ?? null;
-    } else if (Array.isArray(value)) {
-      score = scoreMultiselect(questionId, value);
+    }
+    // Multiselect questions
+    else if (Array.isArray(value)) {
+      const multiselectScore = scoreMultiselect(questionId, value);
+      if (multiselectScore > 0) {
+        score = multiselectScore;
+      }
     }
 
-    if (score !== null) {
+    if (score !== null && dimensionScores[dimension]) {
       dimensionScores[dimension].total += score;
       dimensionScores[dimension].count += 1;
     }
@@ -205,13 +189,14 @@ export function calculateScores(
     'leverage': 'Leverage',
     'friction': 'Friction',
     'change-readiness': 'Change Readiness',
-    'ai-investment': 'AI Investment',
   };
 
+  // Calculate dimension scores
   const dimensions: DimensionScore[] = Object.entries(dimensionScores).map(
     ([key, { total, count }]) => {
       const maxScore = count * 5;
-      const normalizedMax = 17; // 100 / 6 dimensions ≈ 16.67, round to 17
+      // 5 dimensions now, so each is worth 20 points max
+      const normalizedMax = 20;
       const normalizedScore = maxScore > 0
         ? Math.round((total / maxScore) * normalizedMax)
         : 0;
@@ -234,26 +219,29 @@ export function calculateScores(
     }
   );
 
+  // Calculate total score
   const totalScore = dimensions.reduce((sum, d) => sum + d.score, 0);
   const maxTotal = 100;
   const percentage = Math.round((totalScore / maxTotal) * 100);
 
+  // Determine band
   let band: ScorecardResult['band'];
   let bandLabel: string;
   if (percentage >= 80) {
     band = 'optimized';
-    bandLabel = 'Optimized - Ready for advanced AI';
+    bandLabel = 'Optimized - Systems are strong, ready for scale';
   } else if (percentage >= 60) {
     band = 'stable';
-    bandLabel = 'Stable - Good foundation, targeted improvements needed';
+    bandLabel = 'Stable - Good foundation with room to improve';
   } else if (percentage >= 40) {
     band = 'at-risk';
-    bandLabel = 'At Risk - Significant gaps to address';
+    bandLabel = 'At Risk - Significant gaps limiting growth';
   } else {
     band = 'critical';
-    bandLabel = 'Critical - Foundational work needed first';
+    bandLabel = 'Critical - Foundation work needed before scaling';
   }
 
+  // Identify priorities and strengths
   const sortedByScore = [...dimensions].sort((a, b) => a.percentage - b.percentage);
   const topPriorities = sortedByScore
     .slice(0, 2)
@@ -276,4 +264,93 @@ export function calculateScores(
     topPriorities,
     strengths,
   };
+}
+
+// ============================================================================
+// HELPER: Extract business profile data for financial calculations
+// ============================================================================
+
+export interface BusinessProfile {
+  annualRevenue: string;
+  employeeCount: string;
+  industry: string;
+  revenueGoal: string;
+  ownerHoursPerWeek: string;
+  ownerHourlyRate: string;
+  avgDealSize: string;
+  closeRate: string;
+  revenueConstraint: string;
+  currentTools: string[];
+  workPreference: string;
+}
+
+export function extractBusinessProfile(
+  responses: Record<string, string | string[] | number>
+): BusinessProfile {
+  return {
+    annualRevenue: String(responses['profile-1'] || 'Not provided'),
+    employeeCount: String(responses['profile-2'] || 'Not provided'),
+    industry: String(responses['profile-3'] || 'Not provided'),
+    revenueGoal: String(responses['profile-4'] || 'Not provided'),
+    ownerHoursPerWeek: String(responses['profile-5'] || 'Not provided'),
+    ownerHourlyRate: String(responses['profile-6'] || 'Not provided'),
+    avgDealSize: String(responses['sales-2'] || 'Not provided'),
+    closeRate: String(responses['sales-3'] || 'Not provided'),
+    revenueConstraint: String(responses['sales-6'] || 'Not provided'),
+    currentTools: Array.isArray(responses['tech-1']) ? responses['tech-1'] : [],
+    workPreference: String(responses['vision-5'] || 'Not provided'),
+  };
+}
+
+// ============================================================================
+// HELPER: Parse hourly rate from selection for calculations
+// ============================================================================
+
+export function parseHourlyRate(rateSelection: string): number {
+  const rates: Record<string, number> = {
+    '$50/hour': 50,
+    '$75/hour': 75,
+    '$100/hour': 100,
+    '$150/hour': 150,
+    '$200/hour': 200,
+    '$250/hour': 250,
+    '$300+/hour': 300,
+  };
+  return rates[rateSelection] || 100; // Default to $100/hr
+}
+
+// ============================================================================
+// HELPER: Parse employee count for calculations
+// ============================================================================
+
+export function parseEmployeeCount(countSelection: string): number {
+  const counts: Record<string, number> = {
+    'Just me (solopreneur)': 1,
+    '2-5 people': 3,
+    '6-10 people': 8,
+    '11-25 people': 18,
+    '26-50 people': 38,
+    '51-100 people': 75,
+    '100+ people': 100,
+  };
+  return counts[countSelection] || 5; // Default to 5
+}
+
+// ============================================================================
+// HELPER: Parse annual revenue for calculations
+// ============================================================================
+
+export function parseAnnualRevenue(revenueSelection: string): number {
+  const revenues: Record<string, number> = {
+    'Under $250K': 200000,
+    '$250K - $500K': 375000,
+    '$500K - $1M': 750000,
+    '$1M - $2.5M': 1750000,
+    '$2.5M - $5M': 3750000,
+    '$5M - $10M': 7500000,
+    '$10M - $25M': 17500000,
+    '$25M+': 30000000,
+    'Prefer not to say': 0,
+  };
+  return revenues[revenueSelection] || 0;
 }
