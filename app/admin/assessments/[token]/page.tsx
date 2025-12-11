@@ -608,35 +608,21 @@ export default function AdminAssessmentEditPage({
           )}
         </div>
 
-        {/* View Responses */}
-        {assessment.insights?.responseHighlights && assessment.insights.responseHighlights.length > 0 && (
+        {/* View Evidence Chain */}
+        {assessment.insights?.coreDiagnosis?.evidenceChain && assessment.insights.coreDiagnosis.evidenceChain.length > 0 && (
           <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Key Response Highlights
+              Evidence Chain (Key Quotes)
             </h2>
             <div className="space-y-4">
-              {assessment.insights.responseHighlights.slice(0, 5).map((highlight, i) => (
+              {assessment.insights.coreDiagnosis.evidenceChain.map((evidence, i) => (
                 <div key={i} className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                        {highlight.question}
-                      </p>
-                      <p className="text-sm text-amber-700 dark:text-amber-400 mb-2">
-                        "{highlight.response}"
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-white/70">
-                        {highlight.analysis}
-                      </p>
-                    </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      highlight.implication === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                      highlight.implication === 'warning' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
-                      'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    }`}>
-                      {highlight.implication}
-                    </span>
-                  </div>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 italic">
+                    &quot;{evidence.quote}&quot;
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-white/70">
+                    {evidence.interpretation}
+                  </p>
                 </div>
               ))}
             </div>
