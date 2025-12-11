@@ -28,8 +28,9 @@ export async function GET(
       );
     }
 
-    // Check if assessment is submitted
-    if (assessment.status !== 'submitted' && assessment.status !== 'report_ready') {
+    // Check if assessment is ready for insights (submitted, pending_review, or report_ready)
+    const validStatuses = ['submitted', 'pending_review', 'report_ready', 'released'];
+    if (!validStatuses.includes(assessment.status)) {
       return NextResponse.json(
         { error: 'Assessment not yet submitted' },
         { status: 400 }
