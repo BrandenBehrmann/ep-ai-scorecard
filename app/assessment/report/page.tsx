@@ -16,7 +16,6 @@ import {
   Calculator,
   TrendingUp,
   TrendingDown,
-  Download,
   FileText,
   Lightbulb,
   DollarSign,
@@ -229,13 +228,7 @@ function ReportContent() {
               className="h-10 w-auto"
               priority
             />
-            <div className="flex items-center gap-4">
-              <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all text-sm font-medium">
-                <Download className="w-4 h-4" />
-                Download PDF
-              </button>
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
           </div>
         </div>
       </header>

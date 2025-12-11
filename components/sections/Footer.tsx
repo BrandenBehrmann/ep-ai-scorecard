@@ -54,12 +54,24 @@ export function Footer() {
             >
               Start Assessment
             </Link>
+            <Link
+              href="/assessment/demo"
+              className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Demo
+            </Link>
             <a
               href="mailto:hello@enapragma.co"
               className="text-gray-600 dark:text-white/70 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Contact
             </a>
+            <Link
+              href="/admin/assessments"
+              className="text-gray-400 dark:text-white/30 hover:text-gray-600 dark:hover:text-white/50 transition-colors"
+            >
+              Admin
+            </Link>
           </div>
 
           {/* Copyright */}

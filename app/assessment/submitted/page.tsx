@@ -41,6 +41,7 @@ function SubmittedContent() {
     company: string;
     email: string;
     status: string;
+    short_code?: string;
   } | null>(null);
 
   const token = searchParams.get('token');
@@ -59,6 +60,7 @@ function SubmittedContent() {
               company: data.assessment.company,
               email: data.assessment.email,
               status: data.assessment.status,
+              short_code: data.assessment.short_code,
             });
           }
         })
@@ -177,13 +179,15 @@ function SubmittedContent() {
         {/* Bookmark Reminder */}
         <div className="bg-gray-100 dark:bg-white/5 rounded-xl p-6 text-center">
           <Calendar className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-          <h3 className="font-medium text-gray-900 dark:text-white mb-2">Bookmark This Page</h3>
+          <h3 className="font-medium text-gray-900 dark:text-white mb-2">Your Report Link</h3>
           <p className="text-sm text-gray-600 dark:text-white/60 mb-4">
-            You can return to this page anytime to check the status of your report.
+            Bookmark this link to check the status of your report anytime.
           </p>
-          {token && (
-            <div className="bg-white dark:bg-black/30 rounded-lg p-3 text-xs text-gray-500 dark:text-white/40 font-mono break-all">
-              {typeof window !== 'undefined' ? window.location.href : `/assessment/submitted?token=${token}`}
+          {(assessmentData?.short_code || token) && (
+            <div className="bg-white dark:bg-black/30 rounded-lg p-3 text-sm text-gray-700 dark:text-white/70 font-mono">
+              {typeof window !== 'undefined'
+                ? `${window.location.origin}/r/${assessmentData?.short_code || token}`
+                : `/r/${assessmentData?.short_code || token}`}
             </div>
           )}
         </div>
