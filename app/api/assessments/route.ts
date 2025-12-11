@@ -37,21 +37,24 @@ export async function POST(request: NextRequest) {
     const shortCode = generateShortCode();
 
     // Create the assessment record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const insertData: any = {
+      name,
+      email,
+      company,
+      token, // URL access token (backwards compatible)
+      short_code: shortCode, // New cleaner URL code
+      is_demo,
+      stripe_session_id,
+      stripe_payment_status: is_demo ? 'paid' : 'pending', // Demo assessments skip payment
+      status: 'not_started',
+      current_step: 0,
+      responses: {},
+    };
+
     const { data: assessment, error } = await supabase
       .from('assessments')
-      .insert({
-        name,
-        email,
-        company,
-        token, // URL access token (backwards compatible)
-        short_code: shortCode, // New cleaner URL code
-        is_demo,
-        stripe_session_id,
-        stripe_payment_status: is_demo ? 'paid' : 'pending', // Demo assessments skip payment
-        status: 'not_started',
-        current_step: 0,
-        responses: {},
-      })
+      .insert(insertData)
       .select()
       .single();
 

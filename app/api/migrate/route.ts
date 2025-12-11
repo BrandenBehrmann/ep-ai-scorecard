@@ -88,17 +88,19 @@ export async function POST() {
 
   for (const assessment of assessments) {
     const shortCode = generateShortCode();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: updateError } = await supabase
       .from('assessments')
-      .update({ short_code: shortCode })
+      .update({ short_code: shortCode } as any)
       .eq('id', assessment.id);
 
     if (updateError) {
       // If duplicate, try again with new code
       const retryCode = generateShortCode();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: retryError } = await supabase
         .from('assessments')
-        .update({ short_code: retryCode })
+        .update({ short_code: retryCode } as any)
         .eq('id', assessment.id);
 
       if (retryError) {
