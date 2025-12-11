@@ -251,19 +251,19 @@ export default function StartAssessment() {
                 <li className="flex items-start gap-3 text-sm">
                   <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    30-minute diagnostic across 6 dimensions
+                    Comprehensive diagnostic across 5 dimensions
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <Calculator className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    AI Investment analysis with budget planning
+                    Financial impact analysis using YOUR actual numbers
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <FileText className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Personalized scorecard report with AI insights
+                    Root cause diagnosis with actionable insights
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
@@ -275,7 +275,7 @@ export default function StartAssessment() {
                 <li className="flex items-start gap-3 text-sm">
                   <Clock className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Lifetime access to your portal and results
+                    Implementation roadmap (DIY or EP builds it for you)
                   </span>
                 </li>
               </ul>
