@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  LogOut,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -41,14 +42,34 @@ export default function AdminAssessmentsPage() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     setMounted(true);
-    fetchAssessments();
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/admin/auth');
+      if (res.ok) {
+        setAuthenticated(true);
+        fetchAssessments();
+      } else {
+        router.push('/admin/login');
+      }
+    } catch {
+      router.push('/admin/login');
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/admin/auth', { method: 'DELETE' });
+    router.push('/admin/login');
+  };
 
   const fetchAssessments = async () => {
     try {
@@ -106,7 +127,13 @@ export default function AdminAssessmentsPage() {
   // Count pending reviews
   const pendingReviewCount = assessments.filter(a => a.status === 'pending_review').length;
 
-  if (!mounted) return null;
+  if (!mounted || !authenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-amber-700 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -117,7 +144,7 @@ export default function AdminAssessmentsPage() {
             <div className="flex items-center gap-3">
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score Admin"
+                alt="Ena Score Admin"
                 width={120}
                 height={40}
                 className="h-10 w-auto"
@@ -127,7 +154,16 @@ export default function AdminAssessmentsPage() {
                 Admin
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-white/70 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </header>

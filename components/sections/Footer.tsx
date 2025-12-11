@@ -22,20 +22,15 @@ export function Footer() {
             {mounted && (
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score"
+                alt="Ena Pragma"
                 width={100}
                 height={32}
                 className="h-8 w-auto"
               />
             )}
-            <div className="flex flex-col">
-              <span className="text-gray-900 dark:text-white font-semibold">
-                Pragma Score
-              </span>
-              <span className="text-gray-500 dark:text-white/50 text-xs">
-                by Ena Pragma
-              </span>
-            </div>
+            <span className="text-gray-900 dark:text-white font-semibold">
+              Ena Score
+            </span>
           </div>
 
           {/* Links */}

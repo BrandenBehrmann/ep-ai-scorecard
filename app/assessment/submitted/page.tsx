@@ -87,7 +87,7 @@ function SubmittedContent() {
             <div className="flex items-center gap-3">
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score"
+                alt="Ena Pragma"
                 width={120}
                 height={40}
                 className="h-10 w-auto"
@@ -158,7 +158,7 @@ function SubmittedContent() {
                   3. Report Delivery
                 </h3>
                 <p className="text-gray-600 dark:text-white/70 text-sm">
-                  You'll receive an email notification when your personalized Pragma Score report is ready to view.
+                  You'll receive an email notification when your personalized Ena Score report is ready to view.
                 </p>
               </div>
             </div>

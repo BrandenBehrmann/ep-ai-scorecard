@@ -14,20 +14,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Leverage Scorecard | Ena Pragma",
-  description: "Measure your operational readiness for AI implementation. A 25-minute diagnostic across 5 critical dimensions: Control, Clarity, Leverage, Friction, and Change-Readiness.",
-  keywords: ["AI readiness", "operational assessment", "business diagnostic", "AI implementation", "operational health"],
+  title: "Ena Score | Business Diagnostic",
+  description: "Discover what's really holding your business back. A comprehensive diagnostic across 6 dimensions that reveals hidden patterns and provides actionable insights.",
+  keywords: ["business diagnostic", "operational assessment", "business growth", "AI implementation", "operational health"],
   authors: [{ name: "Ena Pragma" }],
   openGraph: {
-    title: "AI Leverage Scorecard | Ena Pragma",
-    description: "Measure your operational readiness for AI implementation. A 25-minute diagnostic across 5 critical dimensions.",
+    title: "Ena Score | Business Diagnostic",
+    description: "Discover what's really holding your business back. A comprehensive diagnostic that reveals hidden patterns and provides actionable insights.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Leverage Scorecard | Ena Pragma",
-    description: "Measure your operational readiness for AI implementation.",
+    title: "Ena Score | Business Diagnostic",
+    description: "Discover what's really holding your business back. Get actionable insights.",
   },
   robots: {
     index: false,

@@ -61,6 +61,7 @@ export default function AdminAssessmentEditPage({
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
   const [saving, setSaving] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [manualInsights, setManualInsights] = useState<ManualInsight[]>([]);
@@ -73,8 +74,22 @@ export default function AdminAssessmentEditPage({
 
   useEffect(() => {
     setMounted(true);
-    fetchAssessment();
+    checkAuth();
   }, [token]);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/admin/auth');
+      if (res.ok) {
+        setAuthenticated(true);
+        fetchAssessment();
+      } else {
+        router.push('/admin/login');
+      }
+    } catch {
+      router.push('/admin/login');
+    }
+  };
 
   const fetchAssessment = async () => {
     try {
@@ -231,9 +246,7 @@ export default function AdminAssessmentEditPage({
     people: MessageSquare,
   };
 
-  if (!mounted) return null;
-
-  if (loading) {
+  if (!mounted || !authenticated || loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-amber-700 animate-spin" />
@@ -335,51 +348,142 @@ export default function AdminAssessmentEditPage({
               </div>
               <p className="text-gray-600 dark:text-white/70 mb-4">{assessment.name} • {assessment.email}</p>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                {/* Generate AI Insights Button - show if no insights yet */}
-                {!assessment.insights && assessment.status !== 'in_progress' && (
-                  <button
-                    onClick={generateInsights}
-                    disabled={generatingInsights}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium disabled:opacity-50"
-                  >
-                    {generatingInsights ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4" />
-                        Generate AI Insights
-                      </>
-                    )}
-                  </button>
+              {/* Workflow Status & Actions */}
+              <div className="mt-4 space-y-3">
+                {/* Step 1: Waiting for customer to complete */}
+                {(assessment.status === 'not_started' || assessment.status === 'in_progress') && (
+                  <div className="p-4 bg-gray-100 dark:bg-white/5 rounded-lg border-2 border-dashed border-gray-300 dark:border-white/20">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-white/20 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-white/60">1</div>
+                      <h4 className="font-semibold text-gray-700 dark:text-white/80">Waiting for Customer</h4>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-white/60 ml-11">
+                      {assessment.status === 'not_started'
+                        ? "Customer hasn't started the assessment yet."
+                        : "Customer is currently filling out the assessment."}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-white/40 ml-11 mt-2">
+                      Cannot generate insights until assessment is submitted.
+                    </p>
+                  </div>
                 )}
 
-                {/* Release Report Button - show only if pending_review and has insights */}
-                {assessment.status === 'pending_review' && assessment.insights && (
-                  <button
-                    onClick={releaseReport}
-                    disabled={releasing}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm font-medium disabled:opacity-50"
-                  >
-                    {releasing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Releasing...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Release Report to Customer
-                      </>
-                    )}
-                  </button>
+                {/* Step 2: Generate AI Insights */}
+                {(assessment.status === 'pending_review' || assessment.status === 'submitted' || assessment.status === 'report_ready' || assessment.status === 'released') && (
+                  <div className={`p-4 rounded-lg border-2 ${
+                    assessment.insights
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                      : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          assessment.insights
+                            ? 'bg-green-500 text-white'
+                            : 'bg-blue-500 text-white'
+                        }`}>
+                          {assessment.insights ? <CheckCircle2 className="w-5 h-5" /> : '2'}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-700 dark:text-white/80">
+                            {assessment.insights ? 'AI Insights Generated' : 'Generate AI Insights'}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-white/50">
+                            {assessment.insights ? 'Report content is ready' : 'Click to analyze responses and generate report'}
+                          </p>
+                        </div>
+                      </div>
+                      {!assessment.insights && (
+                        <button
+                          onClick={generateInsights}
+                          disabled={generatingInsights}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm font-medium disabled:opacity-50"
+                        >
+                          {generatingInsights ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Generating...
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-4 h-4" />
+                              Generate
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 )}
 
-                {/* Copy Link Button */}
+                {/* Step 3: Add Manual Insights (only show after AI insights exist) */}
+                {assessment.insights && (
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border-2 border-amber-300 dark:border-amber-700">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-sm font-bold text-white">3</div>
+                      <div>
+                        <h4 className="font-semibold text-gray-700 dark:text-white/80">Add Your Insights (Optional)</h4>
+                        <p className="text-xs text-gray-500 dark:text-white/50">
+                          Scroll down to add manual insights and executive commentary
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 4: Release Report */}
+                {assessment.insights && (
+                  <div className={`p-4 rounded-lg border-2 ${
+                    assessment.status === 'released'
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+                      : 'bg-gray-100 dark:bg-white/5 border-gray-300 dark:border-white/20'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          assessment.status === 'released'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-gray-400 dark:bg-white/30 text-white'
+                        }`}>
+                          {assessment.status === 'released' ? <CheckCircle2 className="w-5 h-5" /> : '4'}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-700 dark:text-white/80">
+                            {assessment.status === 'released' ? 'Report Released!' : 'Release to Customer'}
+                          </h4>
+                          <p className="text-xs text-gray-500 dark:text-white/50">
+                            {assessment.status === 'released'
+                              ? 'Customer can now view their report'
+                              : 'Make the report visible to the customer'}
+                          </p>
+                        </div>
+                      </div>
+                      {assessment.status !== 'released' && (
+                        <button
+                          onClick={releaseReport}
+                          disabled={releasing}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all text-sm font-medium disabled:opacity-50"
+                        >
+                          {releasing ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Releasing...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="w-4 h-4" />
+                              Release
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Actions Row */}
+              <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
                 <button
                   onClick={copyReportLink}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-white/80 rounded-lg hover:bg-gray-300 dark:hover:bg-white/20 transition-all text-sm"
@@ -397,32 +501,6 @@ export default function AdminAssessmentEditPage({
                   )}
                 </button>
               </div>
-
-              {/* Status Messages */}
-              {assessment.status === 'released' && (
-                <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Report has been released. Customer can view it at the report link.
-                  </p>
-                </div>
-              )}
-              {assessment.status === 'pending_review' && !assessment.insights && (
-                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                  <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    AI insights need to be generated before releasing the report.
-                  </p>
-                </div>
-              )}
-              {assessment.status === 'in_progress' && (
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Customer is still completing the assessment.
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Score Display */}
@@ -455,24 +533,27 @@ export default function AdminAssessmentEditPage({
           </div>
         )}
 
-        {/* Executive Override */}
-        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 mb-8">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-amber-700" />
-            Executive Commentary (Optional)
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-white/70 mb-4">
-            Add a personalized note that will appear at the top of the report. This is your opportunity to add context the AI may have missed.
-          </p>
-          <textarea
-            value={executiveOverride}
-            onChange={(e) => setExecutiveOverride(e.target.value)}
-            placeholder="Enter your personalized executive commentary here. This will appear prominently in the report."
-            className="w-full h-32 px-4 py-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none resize-none"
-          />
-        </div>
+        {/* Executive Override - Only show after AI insights generated */}
+        {assessment.insights && (
+          <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 mb-8">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-amber-700" />
+              Executive Commentary (Optional)
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-white/70 mb-4">
+              Add a personalized note that will appear at the top of the report. This is your opportunity to add context the AI may have missed.
+            </p>
+            <textarea
+              value={executiveOverride}
+              onChange={(e) => setExecutiveOverride(e.target.value)}
+              placeholder="Enter your personalized executive commentary here. This will appear prominently in the report."
+              className="w-full h-32 px-4 py-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none resize-none"
+            />
+          </div>
+        )}
 
-        {/* Manual Key Insights */}
+        {/* Manual Key Insights - Only show after AI insights generated */}
+        {assessment.insights && (
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -607,6 +688,7 @@ export default function AdminAssessmentEditPage({
             </div>
           )}
         </div>
+        )}
 
         {/* View Evidence Chain */}
         {assessment.insights?.coreDiagnosis?.evidenceChain && assessment.insights.coreDiagnosis.evidenceChain.length > 0 && (

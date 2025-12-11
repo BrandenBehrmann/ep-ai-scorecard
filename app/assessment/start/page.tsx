@@ -78,14 +78,14 @@ export default function StartAssessment() {
             <Link href="/" className="flex items-center gap-3">
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score"
+                alt="Ena Pragma"
                 width={120}
                 height={40}
                 className="h-10 w-auto"
                 priority
               />
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                Pragma Score
+                Ena Score
               </span>
             </Link>
             <ThemeToggle />
@@ -109,7 +109,7 @@ export default function StartAssessment() {
               Start Your Assessment
             </h1>
             <p className="text-gray-600 dark:text-white/60 mb-8">
-              Enter your details to begin the Pragma Score diagnostic
+              Enter your details to begin the Ena Score diagnostic
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -232,7 +232,7 @@ export default function StartAssessment() {
               <div className="border-b border-gray-200 dark:border-white/10 pb-4 mb-4">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-gray-900 dark:text-white font-medium">
-                    Pragma Score Assessment
+                    Ena Score Assessment
                   </span>
                   <span className="text-gray-900 dark:text-white font-semibold">
                     $1,500

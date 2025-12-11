@@ -44,7 +44,7 @@ export function Header() {
             {mounted && (
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score"
+                alt="Ena Pragma"
                 width={120}
                 height={40}
                 className="h-8 w-auto"
@@ -52,7 +52,7 @@ export function Header() {
               />
             )}
             <span className="text-xl font-bold text-gray-900 dark:text-white">
-              Pragma Score
+              Ena Score
             </span>
           </Link>
 

@@ -265,7 +265,7 @@ function AssessmentPortal() {
               {mounted && (
                 <Image
                   src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                  alt="Pragma Score"
+                  alt="Ena Pragma"
                   width={100}
                   height={32}
                   className="h-8 w-auto"
@@ -273,7 +273,7 @@ function AssessmentPortal() {
                 />
               )}
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                Pragma Score
+                Ena Score
               </span>
             </div>
             <div className="flex items-center gap-4">

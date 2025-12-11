@@ -95,14 +95,14 @@ export default function AssessmentStart() {
             <a href="/" className="flex items-center gap-3">
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score"
+                alt="Ena Pragma"
                 width={120}
                 height={40}
                 className="h-10 w-auto"
                 priority
               />
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                Pragma Score
+                Ena Score
               </span>
             </a>
             <ThemeToggle />
@@ -118,7 +118,7 @@ export default function AssessmentStart() {
               Discover What's Really Holding Your Business Back
             </h1>
             <p className="text-lg text-gray-600 dark:text-white/70 mb-8">
-              The Pragma Score is a comprehensive business diagnostic that reveals hidden patterns,
+              The Ena Score is a comprehensive business diagnostic that reveals hidden patterns,
               quantifies operational risk, and provides a clear roadmap for growth.
             </p>
 
