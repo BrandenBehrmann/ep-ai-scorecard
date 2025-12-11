@@ -1,6 +1,6 @@
 // Pragma Score Premium Insights Generator
-// $1,500 Value Assessment - Complete Business Diagnostic
-// December 2025 - Full-spectrum analysis: Revenue, Operations, Technology, Growth
+// $1,500 Value Assessment - McKinsey-Style Business Diagnostic
+// Hypothesis-Led Analysis with Pyramid Principle Structure
 
 import OpenAI from 'openai';
 
@@ -17,227 +17,130 @@ function getOpenAIClient(): OpenAI {
 }
 
 // ============================================================================
-// TYPE DEFINITIONS
+// TYPE DEFINITIONS - Simplified for Focused Output
 // ============================================================================
 
-export interface PremiumExecutiveSummary {
-  headline: string;
-  overallAssessment: string;
-  readinessLevel: 'Chaos Mode' | 'Stabilizing' | 'Operational' | 'Optimized' | 'Excellence';
-  topStrength: string;
-  criticalGap: string;
-  bottomLine: string;
-  quotedInsight: string;
-  businessRiskLevel: 'critical' | 'high' | 'moderate' | 'low';
-  estimatedAnnualImpact: string;
-  aiReadinessScore: number;
+export interface CoreDiagnosis {
+  governingThought: string; // The ONE insight that explains everything
+  thesis: string; // 2-3 sentence hypothesis about their business
+  evidenceChain: {
+    quote: string;
+    interpretation: string;
+  }[];
 }
 
-export interface DimensionDeepDive {
+export interface RootCauseAnalysis {
+  surfaceSymptom: string;
+  intermediateIssue: string;
+  rootCause: string;
+  explanation: string;
+  supportingEvidence: string[];
+}
+
+export interface FinancialQuantification {
+  item: string;
+  calculation: string; // Show the actual math
+  annualImpact: number;
+  confidence: 'high' | 'medium' | 'estimate';
+}
+
+export interface ActionItem {
+  action: string;
+  why: string;
+  howTo: string[];
+  timeRequired: string;
+  cost: string;
+  expectedResult: string;
+  prerequisite: string | null;
+}
+
+export interface DimensionAnalysis {
   dimension: string;
   label: string;
   score: number;
   maxScore: number;
   percentage: number;
   interpretation: 'critical' | 'needs-work' | 'stable' | 'strong';
-  summary: string;
-  diagnosis: string;
-  rootCauses: string[];
-  keyFindings: string[];
-  risks: string[];
-  opportunities: string[];
-  immediateActions: string[];
-  weekByWeekPlan: {
-    week: number;
-    focus: string;
-    tasks: string[];
-    deliverable: string;
-    successMetric: string;
-    hoursRequired: number;
-    toolsRecommended: string[];
-  }[];
-  quotedResponse: string;
-  quotedAnalysis: string;
-  benchmarkComparison: string;
-  industryContext: string;
+  diagnosis: string; // 2-3 sentences of ACTUAL insight
+  keyEvidence: string; // Their exact quoted answer
+  whatThisMeans: string; // Business implication
+  immediateAction: string; // ONE specific action
 }
 
-export interface ResponseHighlight {
-  questionId: string;
-  question: string;
-  response: string;
-  analysis: string;
-  implication: 'critical' | 'warning' | 'positive';
-  connectedDimensions: string[];
-}
-
-export interface FinancialImpactAnalysis {
-  totalIdentifiedWaste: string;
-  revenueAtRisk: string;
-  opportunityCost: string;
-  aiInvestmentGap: string;
-  breakdownItems: {
-    item: string;
-    annualCost: string;
-    calculation: string;
-    category: 'direct-waste' | 'opportunity-cost' | 'risk-exposure' | 'ai-gap';
-  }[];
-  roiProjection: {
-    month3: string;
-    month6: string;
-    month12: string;
-  };
-  breakEvenTimeline: string;
-}
-
-export interface RiskAssessmentMatrix {
-  overallRiskLevel: 'critical' | 'high' | 'moderate' | 'low';
-  keyPersonRisk: { level: string; impact: string; mitigation: string };
-  operationalRisk: { level: string; impact: string; mitigation: string };
-  growthRisk: { level: string; impact: string; mitigation: string };
-  technologyRisk: { level: string; impact: string; mitigation: string };
-  competitiveRisk: { level: string; impact: string; mitigation: string };
-  aiReadinessRisk: { level: string; impact: string; mitigation: string };
-}
-
-export interface AhaPatternInsight {
-  title: string;
-  observation: string;
-  connectedDots: string[];
-  rootCauseChain: string[];
-  implication: string;
-  hiddenCost: string;
-  whatChangesEverything: string;
-}
-
-export interface ImplementationRoadmap {
-  totalDuration: string;
-  phases: {
-    name: string;
-    duration: string;
-    weeks: string;
-    focus: string;
-    objective: string;
-    deliverables: string[];
-    weeklyBreakdown: {
-      week: number;
-      focus: string;
-      tasks: string[];
-      milestone: string;
-      hoursRequired: number;
-      toolsUsed: string[];
-    }[];
-    resourcesNeeded: string[];
-    estimatedInvestment: string;
-    expectedOutcome: string;
-    risksToMitigate: string[];
-  }[];
-  criticalPath: string[];
-  quickWins: string[];
-  longTermInitiatives: string[];
-}
-
-export interface BenchmarkComparison {
-  metric: string;
-  yourScore: string;
-  industryAverage: string;
-  topPerformers: string;
-  gap: string;
-  assessment: string;
-}
-
-export interface SuccessMetric {
-  metric: string;
-  currentState: string;
-  targetState: string;
-  timeline: string;
-  measurementMethod: string;
-  owner: string;
-}
-
-export interface EPRecommendation {
-  id: string;
-  title: string;
-  description: string;
-  whyThisMatters: string;
-  expectedOutcome: string;
-  priority: 'high' | 'medium' | 'low';
-  placeholder: boolean;
-}
-
-export interface NextSteps {
-  immediate: string[];
-  thisWeek: string[];
-  thisMonth: string[];
-  thisQuarter: string[];
-  bookingCTA: {
-    headline: string;
-    description: string;
-    calendarLink?: string;
-  };
-}
-
-export interface ManualInsight {
-  id: string;
-  title: string;
-  observation: string;
-  recommendation: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  category: 'strategic' | 'operational' | 'financial' | 'technology' | 'people';
-}
-
-// Specific tool recommendation with real data
-export interface ToolRecommendation {
-  name: string;
-  category: string;
-  monthlyPrice: string;
-  setupTime: string;
-  whyThisTool: string;
-  expectedImpact: string;
-  alternative: string;
-  getStartedStep: string;
-}
-
-// Quick win with immediate action
-export interface QuickWin {
-  title: string;
-  timeToComplete: string;
-  cost: string;
-  expectedResult: string;
-  exactSteps: string[];
-  toolNeeded: string;
-}
-
-// Full premium report structure
 export interface PremiumReportInsights {
   generatedAt: string;
   assessmentId: string;
   companyName: string;
   contactName: string;
-  executiveSummary: PremiumExecutiveSummary;
-  businessContext: {
-    operationalMaturity: string;
-    growthStage: string;
-    primaryChallenge: string;
-    biggestOpportunity: string;
-    competitivePosition: string;
-    aiReadinessAssessment: string;
+
+  // THE CORE (Pyramid Principle - Start with the answer)
+  executiveSummary: {
+    verdict: string; // 1 sentence truth
+    readinessScore: number; // Use the ACTUAL calculated score
+    readinessLevel: string;
+    inOneYear: string; // "If nothing changes, in 12 months..."
+    ifYouAct: string; // "If you address the root cause..."
   };
-  dimensionInsights: DimensionDeepDive[];
-  responseHighlights: ResponseHighlight[];
-  financialImpact: FinancialImpactAnalysis;
-  riskAssessment: RiskAssessmentMatrix;
-  ahaInsight: AhaPatternInsight;
-  implementationRoadmap: ImplementationRoadmap;
-  benchmarks: BenchmarkComparison[];
-  successMetrics: SuccessMetric[];
-  // NEW: Specific actionable sections
-  toolRecommendations: ToolRecommendation[];
-  quickWins: QuickWin[];
-  epRecommendations: EPRecommendation[];
-  nextSteps: NextSteps;
-  executiveOverride?: string;
-  manualInsights?: ManualInsight[];
+
+  // THE DIAGNOSIS
+  coreDiagnosis: CoreDiagnosis;
+  rootCauseAnalysis: RootCauseAnalysis;
+
+  // THE DIMENSIONS (Using ACTUAL scores)
+  dimensionInsights: DimensionAnalysis[];
+
+  // THE MONEY (Real math, not fluff)
+  financialImpact: {
+    totalAnnualWaste: number;
+    calculations: FinancialQuantification[];
+    assumptions: string[];
+    conservativeNote: string;
+  };
+
+  // THE PLAN (Sequential, dependent actions)
+  actionPlan: {
+    thisWeek: ActionItem[];
+    thisMonth: ActionItem[];
+    thisQuarter: ActionItem[];
+    dependencies: string[]; // "Do X before Y because..."
+  };
+
+  // THE TOOLS (Only what they actually need)
+  toolStack: {
+    tool: string;
+    monthlyPrice: string;
+    whyThisTool: string; // Tied to their specific problem
+    alternative: string;
+    setupInstructions: string;
+  }[];
+
+  // THE OPTIONS (Clear paths forward)
+  nextSteps: {
+    optionA: {
+      name: string;
+      description: string;
+      whoItsFor: string;
+    };
+    optionB: {
+      name: string;
+      description: string;
+      whoItsFor: string;
+    };
+    optionC: {
+      name: string;
+      description: string;
+      whoItsFor: string;
+    };
+  };
+
+  // For EP team manual additions
+  epRecommendations?: {
+    id: string;
+    title: string;
+    description: string;
+    priority: 'high' | 'medium' | 'low';
+    placeholder: boolean;
+  }[];
 }
 
 // ============================================================================
@@ -299,26 +202,9 @@ function formatResponsesForPrompt(responses: Record<string, string | string[] | 
     } else {
       displayValue = String(value);
     }
-    formatted.push(`Q: ${label}\nA: ${displayValue}`);
+    formatted.push(`Q: ${label}\nA: "${displayValue}"`);
   }
   return formatted.join('\n\n');
-}
-
-function formatScoresForPrompt(scores: {
-  total: number;
-  percentage: number;
-  band: string;
-  bandLabel: string;
-  dimensions: { dimension: string; label: string; score: number; maxScore: number; percentage: number; interpretation: string }[];
-}): string {
-  const dimensionScores = scores.dimensions
-    .map(d => `- ${d.label}: ${d.score}/${d.maxScore} (${d.percentage}%) - ${d.interpretation}`)
-    .join('\n');
-  return `Overall Score: ${scores.total}/100 (${scores.percentage}%)
-Band: ${scores.bandLabel} (${scores.band})
-
-Dimension Breakdown:
-${dimensionScores}`;
 }
 
 // ============================================================================
@@ -340,111 +226,91 @@ export async function generatePremiumInsights(
 ): Promise<PremiumReportInsights> {
 
   const formattedResponses = formatResponsesForPrompt(responses);
-  const formattedScores = formatScoresForPrompt(scores);
 
-  const systemPrompt = `You are a senior business transformation advisor at Ena Pragma (EP), a consulting firm that doesn't just diagnose—it builds, implements, and scales.
+  // Pre-format dimension data so AI doesn't hallucinate scores
+  const dimensionData = scores.dimensions.map(d =>
+    `${d.label}: ${d.score}/${d.maxScore} (${d.percentage}%) - ${d.interpretation.toUpperCase()}`
+  ).join('\n');
 
-## EP'S PHILOSOPHY
-- We see the FULL picture: revenue, operations, technology, people, growth
-- We don't add work—we REMOVE friction and MULTIPLY capacity
-- Every recommendation must be something they can act on TODAY or hire EP to implement
-- This report should be so valuable they'd pay $1,500 even if they never hire us again
+  const systemPrompt = `You are a senior McKinsey-trained business diagnostician. Your job is to find the ONE root cause that explains multiple symptoms in their business.
 
-## WHAT BUSINESS OWNERS ACTUALLY WANT (December 2025 Research)
+## YOUR METHODOLOGY
 
-Based on current market data:
-1. **REVENUE GROWTH** - Not just efficiency, but actual top-line impact
-2. **TIME BACK** - 75% of SMBs cite "working IN vs ON the business" as top frustration
-3. **CLEAR ROI** - 85% expect AI tools to pay for themselves within 90 days
-4. **SIMPLE IMPLEMENTATION** - They want results, not projects
-5. **COMPETITIVE EDGE** - 77% see AI as essential for survival, not just optimization
+### The Pyramid Principle
+Start with the answer. Your governing thought should explain 80% of what's wrong. Everything else supports that one insight.
 
-## 2025 AUTOMATION LANDSCAPE (REAL DATA)
+### Hypothesis-Led Diagnosis
+1. Form a hypothesis about the root cause
+2. Find evidence in their answers that proves/disproves it
+3. Trace surface symptoms back to the root
+4. Quantify the impact with real math
 
-**Tool Pricing (Current as of Dec 2025):**
-- Zapier: Free tier / $19.99/mo Professional (750 tasks)
-- Make.com: $9/mo for 10,000 operations (BEST VALUE for SMBs)
-- n8n: Free self-hosted / €20/mo cloud
-- ChatGPT Team: $25/user/mo
-- Claude Pro: $20/user/mo
-- Notion: Free / $8/user/mo Plus
-- HubSpot: Free CRM / $45/mo Starter
-- QuickBooks: $30/mo Simple Start
-- Calendly: Free / $10/mo Standard
-- Loom: Free / $12.50/mo Business
-- Slack: Free / $7.25/user/mo Pro
+### What Makes This Worth $1,500
+- NOT reformatting their answers back to them
+- NOT generic recommendations anyone could give
+- NOT impressive-sounding numbers without math
+- YES finding patterns THEY couldn't see
+- YES connecting dots between different answers
+- YES specific actions with clear ROI
+- YES being honest about what we don't know
 
-**ROI Benchmarks (Salesforce 2025 SMB Report):**
-- SMBs with AI see 91% report revenue boost
-- Average time savings: 12.5 hours/week per employee
-- 240% average ROI from workflow automation
-- Break-even on automation tools: typically 30-60 days
+## CRITICAL RULES
 
-## YOUR OUTPUT REQUIREMENTS
+### On Scores
+The scores are ALREADY CALCULATED. You MUST use these exact numbers:
+- Overall: ${scores.percentage}% (${scores.bandLabel})
+${dimensionData}
 
-### 1. NO FLUFF - ONLY ACTIONABLE SPECIFICS
-Bad: "Consider implementing a project management tool"
-Good: "Set up Monday.com ($8/seat/mo) this week. Create three boards: Active Projects, Client Pipeline, Internal Tasks. Takes 2 hours. Your status meetings will shrink from 1 hour to 15 minutes."
+DO NOT generate different scores. These numbers are final.
 
-### 2. QUOTE THEIR EXACT WORDS (minimum 15 times)
-Their own words reflected back create the "aha" moment.
-Format: "You said '[exact quote]' — Here's what that actually means for your business..."
-
-### 3. SPECIFIC TOOL RECOMMENDATIONS WITH REAL PRICING
-Every tool recommendation must include:
-- Exact monthly cost
-- Setup time in hours
-- Expected result in plain terms
-- A cheaper alternative if budget is tight
-
-### 4. THREE "DO THIS TODAY" QUICK WINS
-Each must be completable in under 2 hours with zero budget.
-
-### 5. THE "HIDDEN MULTIPLIER" INSIGHT
-Find the ONE thing that's constraining multiple areas. The insight they couldn't see themselves.
-
-### 6. EP PARTNERSHIP POSITIONING
-End with clear options:
-- Option A: "Take this report and run with it" (they have everything they need)
-- Option B: "Want EP to implement Phase 1 in 2 weeks?" (done-for-you)
-- Option C: "Monthly partnership for ongoing optimization" (retained advisory)
-
-No pressure, no pitch—just clear paths forward.
-
-## FINANCIAL CALCULATIONS
+### On Financial Calculations
+Show your math. Example:
+- BAD: "You're losing $50,000 per year"
+- GOOD: "Owner time on $50/hr work: 10 hrs/week × $150 opportunity cost × 48 weeks = $72,000/year"
 
 Use these rates:
-- Owner time: $150/hour (opportunity cost of bottleneck)
+- Owner opportunity cost: $150/hour
 - Senior employee: $75/hour
-- General employee: $50/hour (fully loaded)
-- Work weeks: 48/year
+- General employee: $50/hour
+- Work weeks per year: 48
 
-Calculate CONSERVATIVELY. Under-promise, over-deliver.
+Be CONSERVATIVE. It's better to underestimate than overpromise.
 
-## DIMENSION INTERPRETATION
+### On Recommendations
+Every tool recommendation must include:
+- Actual monthly price (Dec 2025 pricing)
+- Why THIS tool for THEIR specific problem (quote their answer)
+- Setup time in hours
+- A cheaper alternative
 
-Each dimension reveals something specific:
-1. **CONTROL** = Can this business survive without any single person?
-2. **CLARITY** = Does leadership actually know what's happening?
-3. **LEVERAGE** = Is growth capped by the current model?
-4. **FRICTION** = Where is energy leaking from the system?
-5. **CHANGE READINESS** = Can this organization evolve when needed?
-6. **AI INVESTMENT** = Is the business positioned for the AI economy?
+### On the Root Cause
+Find ONE thing that, if fixed, would improve multiple dimensions. This is the insight worth $1,500.
 
-Company: ${companyName}
-Contact: ${contactName}`;
+Example pattern: "You said projects stall when you're unavailable AND your top frustration is giving people their to-dos AND critical data lives in employee knowledge. These aren't three problems—they're one: your business runs on verbal instructions instead of documented systems."
 
-  const userPrompt = `PRAGMA SCORE ASSESSMENT: ${companyName}
+### On Tone
+- Direct, not diplomatic
+- Specific, not vague
+- Honest about uncertainty
+- Zero consulting buzzwords
+- Talk like a smart friend who runs businesses`;
 
-=== SCORES ===
-${formattedScores}
+  const userPrompt = `BUSINESS DIAGNOSTIC: ${companyName}
+Contact: ${contactName}
+
+=== CALCULATED SCORES (USE THESE EXACTLY) ===
+Overall: ${scores.total}/100 (${scores.percentage}%)
+Band: ${scores.bandLabel}
+
+Dimensions:
+${dimensionData}
 
 === THEIR EXACT RESPONSES ===
 ${formattedResponses}
 
 ---
 
-Generate a complete business diagnostic. Return valid JSON with this structure:
+Analyze this data and return JSON with this structure:
 
 {
   "generatedAt": "${new Date().toISOString()}",
@@ -453,227 +319,124 @@ Generate a complete business diagnostic. Return valid JSON with this structure:
   "contactName": "${contactName}",
 
   "executiveSummary": {
-    "headline": "6-10 word punchy truth (not generic)",
-    "overallAssessment": "3-4 sentences: where they are, what's holding them back, what's possible. Reference their specific situation.",
-    "readinessLevel": "Chaos Mode|Stabilizing|Operational|Optimized|Excellence",
-    "topStrength": "Specific strength with evidence from their answers",
-    "criticalGap": "The ONE root issue affecting multiple areas",
-    "bottomLine": "The single sentence truth they need to hear",
-    "quotedInsight": "\"[Their exact words]\" — What this reveals about their business",
-    "businessRiskLevel": "critical|high|moderate|low",
-    "estimatedAnnualImpact": "Conservative dollar estimate of waste + opportunity cost",
-    "aiReadinessScore": 0-100
+    "verdict": "One sentence truth about their business state",
+    "readinessScore": ${scores.percentage},
+    "readinessLevel": "${scores.bandLabel}",
+    "inOneYear": "If nothing changes, in 12 months [specific consequence based on their answers]",
+    "ifYouAct": "If you address [root cause], you could [specific benefit with estimated impact]"
   },
 
-  "businessContext": {
-    "operationalMaturity": "Where they sit on maturity spectrum with specific evidence",
-    "growthStage": "What growth stage signals from their answers",
-    "primaryChallenge": "The core constraint - traced back to root cause",
-    "biggestOpportunity": "What becomes possible when constraint removed - be specific",
-    "competitivePosition": "How current state affects their market position",
-    "aiReadinessAssessment": "Specific assessment against 2025 benchmarks"
+  "coreDiagnosis": {
+    "governingThought": "The ONE insight that explains 80% of their problems",
+    "thesis": "2-3 sentence hypothesis: 'Based on your responses, [company] is [diagnosis]. The root cause is [X], which manifests as [symptom 1], [symptom 2], and [symptom 3].'",
+    "evidenceChain": [
+      {"quote": "Their exact words from a response", "interpretation": "What this actually reveals about their business"},
+      {"quote": "Another exact quote", "interpretation": "How this connects to the pattern"},
+      {"quote": "Third quote", "interpretation": "Why this confirms the diagnosis"}
+    ]
+  },
+
+  "rootCauseAnalysis": {
+    "surfaceSymptom": "What they probably THINK the problem is",
+    "intermediateIssue": "What's actually causing that symptom",
+    "rootCause": "The underlying issue they need to fix",
+    "explanation": "2-3 sentences explaining the causal chain",
+    "supportingEvidence": ["Quote 1 that proves this", "Quote 2", "Quote 3"]
   },
 
   "dimensionInsights": [
     {
       "dimension": "control",
       "label": "Control",
-      "score": (from scores),
-      "maxScore": 17,
-      "percentage": (from scores),
-      "interpretation": "critical|needs-work|stable|strong",
-      "summary": "2 sentences on what this score means for their specific business",
-      "diagnosis": "You scored X because [specific evidence]. The root cause is [traced back].",
-      "rootCauses": ["Specific cause 1", "Specific cause 2"],
-      "keyFindings": ["Finding with specific evidence from answers"],
-      "risks": ["If [specific person/function] unavailable, [consequence] within [timeline]"],
-      "opportunities": ["When this is fixed, [specific benefit]"],
-      "immediateActions": ["THIS WEEK: [Specific action with exact steps]", "NEXT WEEK: [Follow-up]"],
-      "weekByWeekPlan": [
-        {
-          "week": 1,
-          "focus": "Specific focus",
-          "tasks": ["Exact task 1", "Exact task 2"],
-          "deliverable": "Concrete deliverable",
-          "successMetric": "How they know it's done",
-          "hoursRequired": 3,
-          "toolsRecommended": ["Tool 1", "Tool 2"]
-        }
-      ],
-      "quotedResponse": "Their EXACT words",
-      "quotedAnalysis": "What this quote reveals - be insightful",
-      "benchmarkComparison": "You're at X%. Top performers: Y%. Gap: Z% = $W annual impact",
-      "industryContext": "What best-in-class businesses do differently"
-    }
-    // Include ALL 6 dimensions
-  ],
-
-  "responseHighlights": [
-    {
-      "questionId": "question-id",
-      "question": "The question asked",
-      "response": "Their exact response",
-      "analysis": "Insightful analysis of what this reveals",
-      "implication": "critical|warning|positive",
-      "connectedDimensions": ["dimension1", "dimension2"]
-    }
-    // 8-10 most revealing responses
+      "score": ${scores.dimensions.find(d => d.dimension === 'control')?.score || 0},
+      "maxScore": ${scores.dimensions.find(d => d.dimension === 'control')?.maxScore || 17},
+      "percentage": ${scores.dimensions.find(d => d.dimension === 'control')?.percentage || 0},
+      "interpretation": "${scores.dimensions.find(d => d.dimension === 'control')?.interpretation || 'needs-work'}",
+      "diagnosis": "2-3 sentences of REAL insight about what this score means for THEM specifically",
+      "keyEvidence": "Quote their most revealing answer for this dimension",
+      "whatThisMeans": "The business implication they might not have considered",
+      "immediateAction": "ONE specific action they can take this week"
+    },
+    // ... repeat for all 6 dimensions using the EXACT scores provided above
   ],
 
   "financialImpact": {
-    "totalIdentifiedWaste": "$XX,XXX/year (conservative)",
-    "revenueAtRisk": "$XX,XXX if key constraints not addressed",
-    "opportunityCost": "$XX,XXX in growth not captured",
-    "aiInvestmentGap": "$XX,XXX potential from proper AI implementation",
-    "breakdownItems": [
+    "totalAnnualWaste": (number - sum of all calculations),
+    "calculations": [
       {
-        "item": "Owner time on $50/hr tasks",
-        "annualCost": "$XX,XXX",
-        "calculation": "X hrs/week × $150 × 48 weeks",
-        "category": "direct-waste"
+        "item": "Specific waste item based on their answers",
+        "calculation": "X hrs/week × $Y/hr × 48 weeks",
+        "annualImpact": (number),
+        "confidence": "high|medium|estimate"
       }
     ],
-    "roiProjection": {
-      "month3": "What's realistic by month 3",
-      "month6": "Cumulative by month 6",
-      "month12": "Full year potential"
+    "assumptions": ["List the assumptions behind your calculations"],
+    "conservativeNote": "These estimates are conservative because [reason]. Actual impact could be [X]% higher."
+  },
+
+  "actionPlan": {
+    "thisWeek": [
+      {
+        "action": "Specific action",
+        "why": "Why this matters (tied to their specific problem)",
+        "howTo": ["Step 1", "Step 2", "Step 3"],
+        "timeRequired": "X hours",
+        "cost": "$0 or specific cost",
+        "expectedResult": "What they'll have when done",
+        "prerequisite": null or "Must complete X first"
+      }
+    ],
+    "thisMonth": [...],
+    "thisQuarter": [...],
+    "dependencies": ["Do X before Y because...", "Complete A before starting B because..."]
+  },
+
+  "toolStack": [
+    {
+      "tool": "Tool Name",
+      "monthlyPrice": "$X/month (or Free tier)",
+      "whyThisTool": "Because you said '[quote their answer]', you need [specific capability]. This tool does that.",
+      "alternative": "Alternative Tool ($X/mo) if budget is tight",
+      "setupInstructions": "Go to [URL], create account, do [specific first step]"
+    }
+  ],
+
+  "nextSteps": {
+    "optionA": {
+      "name": "Self-Implementation",
+      "description": "Take this report and run. You have everything you need to execute the action plan yourself.",
+      "whoItsFor": "Business owners with 4+ hours/week to dedicate AND a team member who can own implementation"
     },
-    "breakEvenTimeline": "Specific timeline with reasoning"
-  },
-
-  "riskAssessment": {
-    "overallRiskLevel": "critical|high|moderate|low",
-    "keyPersonRisk": {"level": "Critical/High/Moderate/Low", "impact": "Specific impact", "mitigation": "Specific action"},
-    "operationalRisk": {"level": "...", "impact": "...", "mitigation": "..."},
-    "growthRisk": {"level": "...", "impact": "...", "mitigation": "..."},
-    "technologyRisk": {"level": "...", "impact": "...", "mitigation": "..."},
-    "competitiveRisk": {"level": "...", "impact": "...", "mitigation": "..."},
-    "aiReadinessRisk": {"level": "...", "impact": "...", "mitigation": "..."}
-  },
-
-  "ahaInsight": {
-    "title": "The Hidden Multiplier",
-    "observation": "You mentioned [X], [Y], and [Z] separately. They're all symptoms of ONE thing: [insight]",
-    "connectedDots": ["Quote 1 from their answers", "Quote 2", "Quote 3"],
-    "rootCauseChain": ["Surface symptom", "→ Caused by", "→ Root cause"],
-    "implication": "This means [business consequence they haven't grasped]",
-    "hiddenCost": "Beyond the obvious, this is costing [hidden impact]",
-    "whatChangesEverything": "When you fix this ONE thing, [cascading benefits]"
-  },
-
-  "toolRecommendations": [
-    {
-      "name": "Tool Name",
-      "category": "Category (CRM/Automation/Communication/etc)",
-      "monthlyPrice": "$X/month or Free tier available",
-      "setupTime": "X hours",
-      "whyThisTool": "Specific reason tied to their responses",
-      "expectedImpact": "Save X hours/week or Increase Y by Z%",
-      "alternative": "Cheaper alternative if budget tight",
-      "getStartedStep": "Exact first step: Go to X, click Y, create Z"
+    "optionB": {
+      "name": "EP Jumpstart",
+      "description": "EP implements Phase 1 (the foundation) in 2 weeks. You get the systems without the learning curve.",
+      "whoItsFor": "Business owners who want results fast and would rather invest money than time"
+    },
+    "optionC": {
+      "name": "Ongoing Partnership",
+      "description": "Monthly partnership: EP handles implementation, optimization, and new initiatives as your fractional operations team.",
+      "whoItsFor": "Growing businesses that need operational expertise but aren't ready for full-time ops hire"
     }
-    // 4-6 specific tools based on their needs
-  ],
-
-  "quickWins": [
-    {
-      "title": "Quick Win Title",
-      "timeToComplete": "30 minutes - 2 hours",
-      "cost": "$0 or minimal",
-      "expectedResult": "Specific measurable result",
-      "exactSteps": ["Step 1", "Step 2", "Step 3"],
-      "toolNeeded": "Tool name or 'None'"
-    }
-    // 3 quick wins they can do TODAY
-  ],
-
-  "implementationRoadmap": {
-    "totalDuration": "90 days to meaningful transformation",
-    "phases": [
-      {
-        "name": "Phase 1: Quick Wins & Foundation",
-        "duration": "2 weeks",
-        "weeks": "1-2",
-        "focus": "Immediate relief + setup for bigger changes",
-        "objective": "Specific measurable objective",
-        "deliverables": ["Deliverable 1", "Deliverable 2"],
-        "weeklyBreakdown": [
-          {
-            "week": 1,
-            "focus": "Specific focus",
-            "tasks": ["Exact task 1", "Exact task 2"],
-            "milestone": "What's true by end of week",
-            "hoursRequired": 4,
-            "toolsUsed": ["Tool 1"]
-          }
-        ],
-        "resourcesNeeded": ["Owner: X hrs/week", "Team: Y hrs/week"],
-        "estimatedInvestment": "$X in tools + Y hours",
-        "expectedOutcome": "Specific measurable outcome",
-        "risksToMitigate": ["Risk 1"]
-      }
-      // 3 phases: Quick Wins (2 weeks), Build (4 weeks), Scale (6 weeks)
-    ],
-    "criticalPath": ["Do X before Y", "Complete A before starting B"],
-    "quickWins": ["Today: X", "This week: Y"],
-    "longTermInitiatives": ["Quarterly: X", "Ongoing: Y"]
   },
-
-  "benchmarks": [
-    {
-      "metric": "Specific metric",
-      "yourScore": "Their score",
-      "industryAverage": "Average",
-      "topPerformers": "Top 25%",
-      "gap": "Specific gap",
-      "assessment": "What this means + action"
-    }
-    // 6-8 relevant benchmarks
-  ],
-
-  "successMetrics": [
-    {
-      "metric": "Specific metric to track",
-      "currentState": "Where they are now",
-      "targetState": "Where to aim (90 days)",
-      "timeline": "When to expect change",
-      "measurementMethod": "How to measure",
-      "owner": "Who owns this"
-    }
-    // 6 key metrics
-  ],
 
   "epRecommendations": [
     {
       "id": "ep-1",
       "title": "[EP TEAM WILL ADD]",
-      "description": "Placeholder for manual insight",
-      "whyThisMatters": "",
-      "expectedOutcome": "",
+      "description": "Placeholder for manual insights from the EP team",
       "priority": "high",
       "placeholder": true
     }
-  ],
-
-  "nextSteps": {
-    "immediate": ["Do this in the next 2 hours", "Then this"],
-    "thisWeek": ["Complete by Friday"],
-    "thisMonth": ["30-day milestone"],
-    "thisQuarter": ["90-day vision"],
-    "bookingCTA": {
-      "headline": "Three Paths Forward",
-      "description": "Option A: Run with this report—you have everything you need. Option B: Want EP to implement Phase 1 in 2 weeks? Option C: Ongoing partnership for continuous optimization. Book a 30-minute call to discuss which fits: [link]"
-    }
-  }
+  ]
 }
 
 CRITICAL REMINDERS:
-- Quote their EXACT words at least 15 times throughout
-- Every tool recommendation needs REAL current pricing (Dec 2025)
-- Financial calculations must be conservative and show the math
-- Quick wins must be completable TODAY with ZERO budget
-- No placeholder text anywhere except epRecommendations
-- This report should be valuable even if they never contact EP again`;
+1. Use the EXACT scores provided. Do not generate different numbers.
+2. Quote their actual words at least 8 times. This is how they know you read their answers.
+3. Show math for every financial calculation. No unexplained numbers.
+4. The governing thought should connect at least 3 different symptoms to ONE root cause.
+5. Every tool recommendation must tie to a specific quote from their answers.
+6. Be honest about confidence levels. "Estimate" is fine when you're extrapolating.`;
 
   try {
     const openai = getOpenAIClient();
@@ -683,8 +446,8 @@ CRITICAL REMINDERS:
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.7,
-      max_tokens: 16000,
+      temperature: 0.5, // Lower temperature for more consistent output
+      max_tokens: 8000, // Reduced - focused output doesn't need 16k
       response_format: { type: 'json_object' }
     });
 
@@ -695,22 +458,23 @@ CRITICAL REMINDERS:
 
     const insights = JSON.parse(content) as PremiumReportInsights;
 
-    // Ensure dimension scores match calculated scores
-    if (insights.dimensionInsights) {
-      insights.dimensionInsights = insights.dimensionInsights.map((dim) => {
-        const matchingScore = scores.dimensions.find(s => s.dimension === dim.dimension);
-        if (matchingScore) {
-          return {
-            ...dim,
-            score: matchingScore.score,
-            maxScore: matchingScore.maxScore,
-            percentage: matchingScore.percentage,
-            interpretation: matchingScore.interpretation as 'critical' | 'needs-work' | 'stable' | 'strong',
-          };
-        }
-        return dim;
-      });
-    }
+    // FORCE the correct scores - AI sometimes ignores instructions
+    insights.executiveSummary.readinessScore = scores.percentage;
+    insights.executiveSummary.readinessLevel = scores.bandLabel;
+
+    insights.dimensionInsights = insights.dimensionInsights.map((dim) => {
+      const matchingScore = scores.dimensions.find(s => s.dimension === dim.dimension);
+      if (matchingScore) {
+        return {
+          ...dim,
+          score: matchingScore.score,
+          maxScore: matchingScore.maxScore,
+          percentage: matchingScore.percentage,
+          interpretation: matchingScore.interpretation as 'critical' | 'needs-work' | 'stable' | 'strong',
+        };
+      }
+      return dim;
+    });
 
     return insights;
   } catch (error) {
@@ -739,36 +503,31 @@ export function generateFallbackInsights(
   const weakest = [...scores.dimensions].sort((a, b) => a.percentage - b.percentage)[0];
   const strongest = [...scores.dimensions].sort((a, b) => b.percentage - a.percentage)[0];
 
-  const readinessLevel = scores.percentage >= 80 ? 'Optimized' :
-    scores.percentage >= 60 ? 'Operational' :
-    scores.percentage >= 40 ? 'Stabilizing' : 'Chaos Mode';
-
   return {
     generatedAt: new Date().toISOString(),
     assessmentId,
     companyName,
     contactName,
     executiveSummary: {
-      headline: `${scores.bandLabel}: Clear Path Forward`,
-      overallAssessment: `${companyName} scored ${scores.percentage}/100. ${weakest.label} needs immediate attention while ${strongest.label} is a competitive advantage to leverage.`,
-      readinessLevel: readinessLevel as PremiumExecutiveSummary['readinessLevel'],
-      topStrength: `${strongest.label} (${strongest.percentage}%)`,
-      criticalGap: `${weakest.label} (${weakest.percentage}%)`,
-      bottomLine: scores.percentage >= 60 ?
-        'Foundation is solid—focus on targeted improvements.' :
-        'Address foundation gaps before scaling.',
-      quotedInsight: 'Review detailed analysis below.',
-      businessRiskLevel: scores.percentage < 40 ? 'critical' : scores.percentage < 60 ? 'high' : 'moderate',
-      estimatedAnnualImpact: 'See Financial Impact section.',
-      aiReadinessScore: scores.percentage,
+      verdict: `${companyName} has foundation gaps that need addressing before scaling.`,
+      readinessScore: scores.percentage,
+      readinessLevel: scores.bandLabel,
+      inOneYear: `If nothing changes, ${weakest.label.toLowerCase()} issues will continue constraining growth.`,
+      ifYouAct: `Addressing ${weakest.label.toLowerCase()} could unlock significant operational capacity.`
     },
-    businessContext: {
-      operationalMaturity: readinessLevel,
-      growthStage: 'See detailed analysis',
-      primaryChallenge: `Improving ${weakest.label}`,
-      biggestOpportunity: `Leveraging ${strongest.label}`,
-      competitivePosition: 'See dimension analysis',
-      aiReadinessAssessment: scores.percentage >= 70 ? 'Ready for AI' : 'Foundation work needed',
+    coreDiagnosis: {
+      governingThought: `The business is constrained by ${weakest.label.toLowerCase()} issues.`,
+      thesis: `Based on the assessment, ${companyName} scores ${scores.percentage}% on operational readiness. The primary constraint is ${weakest.label} (${weakest.percentage}%), which limits growth potential.`,
+      evidenceChain: [
+        { quote: 'See responses', interpretation: 'Full AI analysis unavailable - using calculated scores' }
+      ]
+    },
+    rootCauseAnalysis: {
+      surfaceSymptom: `Low ${weakest.label} score (${weakest.percentage}%)`,
+      intermediateIssue: 'Systemic gaps in this area',
+      rootCause: 'Foundation work needed',
+      explanation: 'The assessment reveals this as the priority area for improvement.',
+      supportingEvidence: ['Assessment score data']
     },
     dimensionInsights: scores.dimensions.map(dim => ({
       dimension: dim.dimension,
@@ -777,138 +536,64 @@ export function generateFallbackInsights(
       maxScore: dim.maxScore,
       percentage: dim.percentage,
       interpretation: dim.interpretation as 'critical' | 'needs-work' | 'stable' | 'strong',
-      summary: `${dim.label}: ${dim.percentage}% - ${dim.interpretation}`,
-      diagnosis: `Score indicates ${dim.interpretation} performance.`,
-      rootCauses: ['See detailed response analysis'],
-      keyFindings: [`${dim.percentage}% score`],
-      risks: ['Review roadmap for mitigation'],
-      opportunities: ['See recommendations'],
-      immediateActions: ['Review responses'],
-      weekByWeekPlan: [],
-      quotedResponse: 'See responses',
-      quotedAnalysis: 'See analysis',
-      benchmarkComparison: 'See benchmarks',
-      industryContext: 'See industry context',
+      diagnosis: `${dim.label} at ${dim.percentage}% indicates ${dim.interpretation} performance.`,
+      keyEvidence: 'See detailed responses',
+      whatThisMeans: dim.percentage < 50 ? 'This area needs immediate attention.' : 'This area is functioning adequately.',
+      immediateAction: 'Review responses and identify specific improvements.'
     })),
-    responseHighlights: [],
     financialImpact: {
-      totalIdentifiedWaste: 'Requires AI analysis',
-      revenueAtRisk: 'Requires AI analysis',
-      opportunityCost: 'Requires AI analysis',
-      aiInvestmentGap: 'Requires AI analysis',
-      breakdownItems: [],
-      roiProjection: { month3: 'TBD', month6: 'TBD', month12: 'TBD' },
-      breakEvenTimeline: 'See detailed analysis',
+      totalAnnualWaste: 0,
+      calculations: [],
+      assumptions: ['Full financial analysis requires AI processing'],
+      conservativeNote: 'Schedule strategy session for detailed financial impact analysis.'
     },
-    riskAssessment: {
-      overallRiskLevel: scores.percentage < 40 ? 'critical' : 'moderate',
-      keyPersonRisk: { level: 'Review', impact: 'See Control', mitigation: 'Document processes' },
-      operationalRisk: { level: 'Review', impact: 'See Friction', mitigation: 'Streamline workflows' },
-      growthRisk: { level: 'Review', impact: 'See Leverage', mitigation: 'Improve efficiency' },
-      technologyRisk: { level: 'Review', impact: 'See Change', mitigation: 'Update strategy' },
-      competitiveRisk: { level: 'Review', impact: 'Overall score', mitigation: 'Address gaps' },
-      aiReadinessRisk: { level: 'Review', impact: 'See AI Investment', mitigation: 'Establish budget' },
-    },
-    ahaInsight: {
-      title: 'Pattern Analysis',
-      observation: 'Full analysis reveals connected patterns.',
-      connectedDots: [],
-      rootCauseChain: [],
-      implication: 'Book a strategy session for insights.',
-      hiddenCost: 'See financial impact.',
-      whatChangesEverything: 'See roadmap.',
-    },
-    toolRecommendations: [
-      {
-        name: 'Notion',
-        category: 'Documentation & Knowledge Base',
-        monthlyPrice: 'Free / $8/user for Plus',
-        setupTime: '2 hours',
-        whyThisTool: 'Central hub for processes, docs, and team knowledge',
-        expectedImpact: 'Reduce information search time by 80%',
-        alternative: 'Google Docs (Free)',
-        getStartedStep: 'Go to notion.so, create workspace, start with "Team Wiki" template'
-      },
-      {
-        name: 'Make.com',
-        category: 'Automation',
-        monthlyPrice: '$9/month for 10,000 operations',
-        setupTime: '1-2 hours per workflow',
-        whyThisTool: 'Best value automation platform for SMBs',
-        expectedImpact: 'Automate 5-10 hours of manual work per week',
-        alternative: 'Zapier Free tier (100 tasks/month)',
-        getStartedStep: 'Sign up at make.com, connect your first two apps'
-      }
-    ],
-    quickWins: [
-      {
-        title: 'Document Your #1 Process',
-        timeToComplete: '1 hour',
+    actionPlan: {
+      thisWeek: [{
+        action: 'Review this assessment with your team',
+        why: 'Alignment on current state enables focused improvement',
+        howTo: ['Share assessment', 'Discuss scores', 'Identify quick wins'],
+        timeRequired: '1 hour',
         cost: '$0',
-        expectedResult: 'First critical process documented and shareable',
-        exactSteps: [
-          'Open Loom (free) or phone camera',
-          'Record yourself doing the task',
-          'Share link with team',
-          'Create simple checklist from video'
-        ],
-        toolNeeded: 'Loom (free) or phone'
+        expectedResult: 'Team alignment on priorities',
+        prerequisite: null
+      }],
+      thisMonth: [],
+      thisQuarter: [],
+      dependencies: ['Complete team review before starting improvements']
+    },
+    toolStack: [
+      {
+        tool: 'Notion',
+        monthlyPrice: 'Free tier available',
+        whyThisTool: 'Central hub for documentation and processes',
+        alternative: 'Google Docs (Free)',
+        setupInstructions: 'Go to notion.so, create workspace, start with Team Wiki template'
       }
     ],
-    implementationRoadmap: {
-      totalDuration: '90 days',
-      phases: [{
-        name: 'Foundation',
-        duration: '2 weeks',
-        weeks: '1-2',
-        focus: 'Quick wins',
-        objective: 'Immediate improvements',
-        deliverables: ['Process documentation', 'Quick wins completed'],
-        weeklyBreakdown: [],
-        resourcesNeeded: ['4-6 hours/week'],
-        estimatedInvestment: 'Time only',
-        expectedOutcome: 'Foundation established',
-        risksToMitigate: ['Time constraints'],
-      }],
-      criticalPath: ['Documentation before delegation'],
-      quickWins: ['Document one process this week'],
-      longTermInitiatives: ['Quarterly reviews'],
+    nextSteps: {
+      optionA: {
+        name: 'Self-Implementation',
+        description: 'Use this assessment to guide your own improvements.',
+        whoItsFor: 'Teams with capacity to drive change internally'
+      },
+      optionB: {
+        name: 'EP Jumpstart',
+        description: 'Let EP implement the foundation in 2 weeks.',
+        whoItsFor: 'Businesses that want fast results'
+      },
+      optionC: {
+        name: 'Ongoing Partnership',
+        description: 'Monthly operational partnership with EP.',
+        whoItsFor: 'Growing businesses needing ongoing support'
+      }
     },
-    benchmarks: [{
-      metric: 'Overall Readiness',
-      yourScore: `${scores.percentage}%`,
-      industryAverage: '50%',
-      topPerformers: '70%+',
-      gap: scores.percentage < 70 ? `${70 - scores.percentage}% gap` : 'At target',
-      assessment: scores.percentage >= 70 ? 'Ready' : 'Foundation needed'
-    }],
-    successMetrics: [{
-      metric: 'Overall Score',
-      currentState: `${scores.percentage}%`,
-      targetState: '70%+',
-      timeline: '90 days',
-      measurementMethod: 'Re-assessment',
-      owner: 'Leadership'
-    }],
     epRecommendations: [{
       id: 'ep-1',
       title: '[EP TEAM WILL ADD]',
-      description: 'Placeholder',
-      whyThisMatters: '',
-      expectedOutcome: '',
+      description: 'Placeholder for manual insights',
       priority: 'high',
       placeholder: true
-    }],
-    nextSteps: {
-      immediate: ['Review this assessment', 'Pick your first quick win'],
-      thisWeek: ['Complete one quick win', 'Share with team'],
-      thisMonth: ['Complete Phase 1'],
-      thisQuarter: ['Re-assess and measure progress'],
-      bookingCTA: {
-        headline: 'Three Paths Forward',
-        description: 'Option A: Run with this report. Option B: EP implements for you. Option C: Ongoing partnership.',
-      },
-    },
+    }]
   };
 }
 
