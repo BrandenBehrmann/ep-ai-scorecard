@@ -442,14 +442,14 @@ export default function AdminAssessmentEditPage({
               AI-Generated Executive Summary
             </h3>
             <p className="text-gray-700 dark:text-white/80 mb-4">
-              {assessment.insights.executiveSummary.overallAssessment}
+              {assessment.insights.executiveSummary.verdict}
             </p>
             <div className="flex flex-wrap gap-4 text-sm">
-              <span className="text-green-700 dark:text-green-400">
-                <strong>Top Strength:</strong> {assessment.insights.executiveSummary.topStrength}
+              <span className="text-amber-700 dark:text-amber-400">
+                <strong>If Nothing Changes:</strong> {assessment.insights.executiveSummary.inOneYear}
               </span>
-              <span className="text-red-700 dark:text-red-400">
-                <strong>Critical Gap:</strong> {assessment.insights.executiveSummary.criticalGap}
+              <span className="text-green-700 dark:text-green-400">
+                <strong>If You Act:</strong> {assessment.insights.executiveSummary.ifYouAct}
               </span>
             </div>
           </div>
