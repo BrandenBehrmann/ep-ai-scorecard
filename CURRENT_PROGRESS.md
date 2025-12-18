@@ -1,7 +1,7 @@
 # Revenue Friction Diagnostic - Current Progress
 
 **Last Updated:** December 17, 2025
-**Status:** Pattern Analysis Implemented, Final Report UI Pending
+**Status:** Output Hardening Complete, Report UI Pending
 
 ---
 
@@ -12,37 +12,46 @@ Pivoted from "Ena Score" (6-dimension AI assessment with scores) to **Revenue Fr
 
 **Core Principle:** "If the output opens conversation, it failed. If it ends debate, it succeeded."
 
+### Output Hardening (COMPLETE - Dec 17)
+Implemented 5 MANDATORY SYNTHESIS MECHANISMS that transform AI output from "analysis that informs" to "synthesis that creates inevitability."
+
+**The 5 Mechanisms:**
+
+| # | Mechanism | What It Does | Where Used |
+|---|-----------|--------------|------------|
+| 1 | **Structural Truth** | ONE sentence describing operating structure making constraint inevitable | Section 1 |
+| 2 | **Enforcement Chain** | 3-5 link causal chain → Revenue outcome | Section 2 |
+| 3 | **Quantification Ladder** | frequency → volume → time → money | Section 3 |
+| 4 | **"This Fix Fails If"** | Why naive fixes collapse | Section 5 |
+| 5 | **Binary Success Criteria** | 3 testable yes/no conditions | Section 5 |
+
+**Example Output (Precision Plumbing):**
+```
+MECHANISM 1: "Revenue conversion depends on owner which has no enforcement mechanism,
+             so follow-up leaks by default."
+
+MECHANISM 2: "No automated trigger → Quote sits → Customer quiet → No one notices →
+             Revenue leaks through forgotten follow-ups"
+
+MECHANISM 3: "6-8 hours/week → 312-416 hours/year → $15,600-$20,800/year"
+
+MECHANISM 4: "This fix fails if you try adding calendar reminders while owner remains
+             the system of record. Reminders require the same overloaded person to
+             remember to check them."
+
+MECHANISM 5:
+  1. Every quote has an expiration action
+  2. Nothing goes quiet for more than 48 hours without a trigger
+  3. Closure rate is known and tracked
+```
+
 ### Pattern Analysis System (COMPLETE)
-Added pre-processing analysis that runs BEFORE AI generation to enable synthesis instead of paraphrase.
+Pre-processing analysis that runs BEFORE AI generation to enable synthesis instead of paraphrase.
 
 **Files Modified:**
-- `lib/database.types.ts` - Added `PatternAnalysis` interface
-- `lib/scoring.ts` - Added 4 analysis functions + `analyzePatterns()`
-- `lib/premium-insights.ts` - New system prompt with analysis toolkit
-- `app/api/insights/[token]/route.ts` - Recalculates constraint on regeneration
-
-### Pattern Analysis Detects:
-
-| Analysis Type | Description |
-|---------------|-------------|
-| **Repeated Entities** | email, phone, spreadsheet, owner, whiteboard, quickbooks, memory, CRM |
-| **Contradictions** | Logical conflicts between answers (e.g., "rarely slip" + "nothing enforces") |
-| **Quantifiable Data** | Numbers extracted and annualized (e.g., "6-8 hours/week" → "312-416 hours/year") |
-| **Second-Order Effects** | What fixing the constraint exposes next |
-
-### Before/After Comparison
-
-**BEFORE (just paraphrasing):**
-```
-"You identified this as your primary constraint in Section 7."
-"This constraint will continue to block revenue conversion."
-```
-
-**AFTER (pattern synthesis):**
-```
-"Follow-up appears as a critical failure point in multiple areas... This is not incidental—it is structural."
-"Assuming a conversion rate of 20% and average job value of $1,000, this could mean a potential loss of $62,400 to $104,000 per year."
-```
+- `lib/database.types.ts` - Added `SynthesisMechanisms` interface
+- `lib/scoring.ts` - Added 5 compute functions + constants for chains/criteria/failure modes
+- `lib/premium-insights.ts` - Rewrote system prompt with quality gates
 
 ---
 
@@ -51,9 +60,9 @@ Added pre-processing analysis that runs BEFORE AI generation to enable synthesis
 ### Assessment Flow
 1. User enters info at `/assessment/start`
 2. Answers 23 questions (3 profile + 20 diagnostic) at `/assessment/portal`
-3. On submit: `calculateConstraint()` runs with pattern analysis
+3. On submit: `calculateConstraint()` runs with pattern analysis + synthesis mechanisms
 4. Admin generates diagnostic at `/admin/assessments/[token]`
-5. AI uses pattern analysis to synthesize insights
+5. AI uses pre-computed mechanisms to synthesize insights
 6. Customer views report at `/assessment/report?token=X`
 
 ### Key Files
@@ -61,14 +70,17 @@ Added pre-processing analysis that runs BEFORE AI generation to enable synthesis
 | File | Purpose |
 |------|---------|
 | `lib/assessment-questions.ts` | 23 questions in 8 sections |
-| `lib/scoring.ts` | Constraint detection + pattern analysis |
+| `lib/scoring.ts` | Constraint detection + pattern analysis + synthesis mechanisms |
 | `lib/premium-insights.ts` | AI prompt + diagnostic generation |
-| `lib/database.types.ts` | TypeScript types including `PatternAnalysis` |
+| `lib/database.types.ts` | TypeScript types including `SynthesisMechanisms` |
 | `app/api/insights/[token]/route.ts` | Diagnostic generation API |
 
-### Database Schema
-- `assessments` table with `constraint_result` JSONB column
-- `constraint_result` now includes `patternAnalysis` object
+### Pre-defined Constants in scoring.ts
+
+**ENFORCEMENT_CHAINS:** Causal chains by category
+**FAILURE_MODES:** Why naive fixes fail by category
+**SUCCESS_CRITERIA:** 3 binary tests by category
+**STRUCTURAL_TRUTH_TEMPLATES:** One-sentence templates by category
 
 ---
 
@@ -76,18 +88,19 @@ Added pre-processing analysis that runs BEFORE AI generation to enable synthesis
 
 ### 1. Report Page UI (`app/assessment/report/page.tsx`)
 The report page needs to be updated to properly display the new diagnostic format:
-- Currently may be showing old v1 layout
-- Needs to render the 8 locked sections properly
-- Should display pattern analysis insights (entities, contradictions, costs)
+- Render the 8 locked sections with new mechanism content
+- Display enforcement chain visually
+- Show binary success criteria as checklist
+- Display quantification ladder progression
 
 ### 2. Admin Panel Display
-- Pattern analysis should be visible in admin view
-- Show detected entities, contradictions, quantified costs
+- Show synthesis mechanisms in admin view
+- Display the 5 mechanisms for debugging/review
 
 ### 3. Testing Edge Cases
 - Assessments with no quantifiable numbers
-- Assessments with detected contradictions
 - Different constraint categories (not just followup_leakage)
+- Validate all category chains/criteria work correctly
 
 ---
 
@@ -98,12 +111,12 @@ The report page needs to be updated to properly display the new diagnostic forma
 - **Constraint:** Follow-Up Leakage
 - **Status:** report_ready
 
-### 2. Precision Plumbing Co (NEW)
+### 2. Precision Plumbing Co
 - **Token:** `3ad9495e-98cb-481f-8f1f-46350b58d8cc`
 - **Constraint:** Follow-Up Leakage
-- **Status:** report_ready
+- **Status:** report_ready (regenerated with new mechanisms)
 - **Pattern Analysis:** 18 owner mentions, 13 phone mentions, 6 spreadsheet mentions
-- **Quantified:** 312-416 hours/year wasted, $62,400-$104,000/year potential loss
+- **Quantified:** 312-416 hours/year, $15,600-$20,800/year
 
 ---
 
@@ -129,55 +142,72 @@ npm run dev
 
 ## Technical Details
 
-### Pattern Analysis Functions in `lib/scoring.ts`
+### SynthesisMechanisms Interface
 
 ```typescript
-// Main function
-export function analyzePatterns(responses, category): PatternAnalysis
-
-// Sub-functions
-extractEntities(responses)      // Finds repeated terms
-detectContradictions(responses) // Finds logical conflicts
-extractNumbers(responses)       // Finds quantifiable data
-inferSecondOrderEffects(category, responses) // Predicts next constraints
-```
-
-### AI Prompt Structure
-
-The system prompt now includes 4 analysis tools:
-1. **Pattern Amplification** - "X appears in N answers"
-2. **Contradiction Exposure** - "You stated A but also B"
-3. **Quantification** - "At N hours/week, this is Y hours/year"
-4. **Second-Order Effects** - "If X is fixed, Y will surface"
-
-### Output Format (8 Locked Sections)
-
-```typescript
-interface RevenueFrictionDiagnostic {
-  primaryBottleneck: { constraint, ownerStatement, inPlainTerms }
-  whyThisIsPriority: { ruleExplanation, supportingEvidence, notOpinion }
-  costOfInaction: { ifIgnored, timeframeWarning, revenueLink }
-  whatNotToFixYet: { deprioritizedItem, otherIssues, reasoning }
-  goodFixLooksLike: { successState, youWillKnowBecause, notPrescriptive }
-  twoPathsForward: { diyPath, epSystemPath }
-  doesNotDo: string[]
-  finalityStatement: { statement, noUpsell }
+interface SynthesisMechanisms {
+  structuralTruth: {
+    keyDependency: string;      // e.g., "owner", "email"
+    dependencyCount: number;    // How many times it appears
+    templateHint: string;       // Pre-generated sentence
+  };
+  enforcementChain: {
+    links: Array<{
+      condition: string;
+      evidenceQuestionId?: string;
+      evidenceText?: string;
+    }>;
+    finalOutcome: string;
+  };
+  quantificationLadder: {
+    frequency: { value: string; source?: string } | null;
+    volume: { value: string; source?: string } | null;
+    time: { value: string; source?: string } | null;
+    money: { value: string; source?: string } | null;
+    summary: string;
+  };
+  fixFailsIf: {
+    naiveApproach: string;
+    whyItFails: string;
+    sentence: string;
+  };
+  successCriteria: Array<{
+    criterion: string;
+    testMethod: string;
+  }>;
 }
 ```
+
+### Quality Gates (AI Self-Check)
+
+The system prompt requires AI to verify before output:
+- [ ] Exactly 8 sections
+- [ ] One constraint only from tradeoff-1
+- [ ] tradeoff-2 explicitly stated
+- [ ] All 5 mechanisms included
+- [ ] Each section has concrete nouns from answers
+- [ ] NO banned phrases (might, may, appears, suggests, consider, could)
+- [ ] Output reads like inevitability, not analysis
+
+### Banned Phrases
+The system prompt explicitly bans: might, may, appears, suggests, consider, could, generally, often, perhaps, seems, "in many businesses", "you might want to", "it appears that", "based on our analysis"
 
 ---
 
 ## Next Session TODO
 
 1. [ ] Update report page UI to display new diagnostic format
-2. [ ] Update admin panel to show pattern analysis details
-3. [ ] Test with different constraint categories
+2. [ ] Update admin panel to show synthesis mechanisms
+3. [ ] Test with different constraint categories (intake_friction, visibility_gaps, etc.)
 4. [ ] Verify production deployment works correctly
 5. [ ] Consider adding more contradiction detection pairs
-6. [ ] Consider revenue estimation based on industry benchmarks
 
 ---
 
 ## Git Status
 
-Run `git status` to see uncommitted changes before pushing.
+Latest commit includes output hardening implementation:
+- SynthesisMechanisms interface
+- 5 compute functions in scoring.ts
+- Updated system prompt with quality gates
+- Updated user prompt with mechanism formatting

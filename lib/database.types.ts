@@ -132,6 +132,58 @@ export interface ConstraintResult {
 }
 
 // ============================================================================
+// SYNTHESIS MECHANISMS (Output Hardening)
+// Pre-computed mechanisms that MUST appear in every diagnostic
+// These create inevitability, not analysis
+// ============================================================================
+
+export interface SynthesisMechanisms {
+  // MECHANISM 1: Structural Truth
+  // ONE sentence describing the operating structure that makes constraint inevitable
+  structuralTruth: {
+    keyDependency: string;           // e.g., "owner", "email", "memory"
+    dependencyCount: number;         // How many times it appears
+    templateHint: string;            // Template for AI to synthesize
+  };
+
+  // MECHANISM 2: Constraint Enforcement Chain
+  // 3-5 link causal chain showing how structure creates outcome
+  enforcementChain: {
+    links: Array<{
+      condition: string;             // e.g., "No automated trigger exists"
+      evidenceQuestionId?: string;   // Which question supports this
+      evidenceText?: string;         // Actual quote from answer
+    }>;
+    finalOutcome: string;            // e.g., "Revenue leaks through forgotten follow-ups"
+  };
+
+  // MECHANISM 3: Quantification Ladder
+  // frequency → volume → time → money progression
+  quantificationLadder: {
+    frequency: { value: string; source?: string } | null;  // e.g., "3x/week"
+    volume: { value: string; source?: string } | null;     // e.g., "156 incidents/year"
+    time: { value: string; source?: string } | null;       // e.g., "312-416 hours/year"
+    money: { value: string; source?: string } | null;      // e.g., "$62,400-$104,000/year"
+    summary: string;                 // Human-readable ladder summary
+  };
+
+  // MECHANISM 4: "This Fix Fails If" Clause
+  // Why naive fixes collapse under current structure
+  fixFailsIf: {
+    naiveApproach: string;           // What people typically try first
+    whyItFails: string;              // Why that approach is insufficient
+    sentence: string;                // Combined statement
+  };
+
+  // MECHANISM 5: Binary Success Criteria
+  // 3 testable yes/no conditions for "fixed"
+  successCriteria: Array<{
+    criterion: string;               // Testable condition
+    testMethod: string;              // How to verify (observable)
+  }>;
+}
+
+// ============================================================================
 // PATTERN ANALYSIS TYPES
 // Used to pre-process answers BEFORE AI generation
 // This enables pattern synthesis (not judgment) - connecting dots across answers
@@ -166,6 +218,9 @@ export interface PatternAnalysis {
     ifFixed: string;                                      // The constraint being fixed
     thenExposed: string;                                  // What becomes the next problem
   }>;
+
+  // Pre-computed synthesis mechanisms for output hardening
+  synthesisMechanisms: SynthesisMechanisms;
 }
 
 // Category labels for display

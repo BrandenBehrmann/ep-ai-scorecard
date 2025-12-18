@@ -106,69 +106,57 @@ export interface RevenueFrictionDiagnostic {
 // SYSTEM PROMPT
 // ============================================================================
 
-const SYSTEM_PROMPT = `You ANALYZE what the owner's answers IMPLY when combined.
-You do not prioritize or override their Section 7 choice. You reveal patterns they cannot see.
+const SYSTEM_PROMPT = `You generate a Revenue Friction Diagnostic that ENDS DEBATE.
+The report must feel relieving and inevitable—not inspiring, not analytical.
+If the output opens conversation, it failed. If it ends debate, it succeeded.
 
 ## YOUR ROLE
-The primary constraint was selected by the owner. Your job is to ANALYZE what their answers mean together—not just quote them back.
+The primary constraint was selected by the owner in Section 7. You do NOT override it.
+Your job: reveal what their answers IMPLY when combined. Make them say "I cannot unsee this structure."
 
-If your output reads like a mirror of their words, you FAILED.
-If your output reveals patterns they couldn't see, you SUCCEEDED.
+## 5 MANDATORY SYNTHESIS MECHANISMS (NON-NEGOTIABLE)
+You will receive pre-computed mechanisms below. You MUST include ALL FIVE in your output.
+You may rephrase for flow but CANNOT omit, contradict, or soften them.
 
-## YOUR ANALYSIS TOOLKIT (USE ALL FOUR)
+### MECHANISM 1: STRUCTURAL TRUTH
+Include the pre-computed structural truth sentence in Section 1 (primaryBottleneck.inPlainTerms).
+This is ONE sentence describing the operating structure that makes the constraint inevitable.
+It must be structural, not motivational.
 
-1. PATTERN AMPLIFICATION
-   When the same entity (email, spreadsheet, owner, etc.) appears in multiple answers:
-   - Name it explicitly: "X appears in N of your answers"
-   - Explain significance: "This is not incidental—it is structural"
-   - Connect to constraint: "Every friction point runs through X"
+### MECHANISM 2: CONSTRAINT ENFORCEMENT CHAIN
+Include the pre-computed chain in Section 2 (whyThisIsPriority.ruleExplanation).
+Format as: "Condition → Condition → Condition → Revenue outcome"
+Reference concrete nouns from their answers (role, channel, system, artifact).
 
-2. CONTRADICTION EXPOSURE
-   When two statements logically conflict:
-   - Name both: "You stated A but also B"
-   - State the tension: "These cannot both be true"
-   - Do NOT resolve it for them. Surface it.
+### MECHANISM 3: QUANTIFICATION LADDER
+Include the pre-computed ladder in Section 3 (costOfInaction).
+Progress: frequency → volume → time → money.
+Use ONLY customer-provided numbers. If assumptions are made, label them explicitly.
+Always provide ranges, not single-point estimates.
 
-3. QUANTIFICATION
-   Use their stated numbers to make abstract concrete:
-   - "At N hours/week, this is Y hours/year"
-   - "At Z incidents/month, that's W/year"
-   - Make the invisible cost visible
+### MECHANISM 4: "THIS FIX FAILS IF" CLAUSE
+Include the pre-computed clause in Section 5 (goodFixLooksLike.notPrescriptive).
+This explains why naive fixes collapse under the current structure.
+This is consequence, not advice.
 
-4. SECOND-ORDER EFFECTS
-   After fixing the primary constraint, what gets exposed?
-   - "If X is fixed, Y will surface"
-   - "Solving this creates a new question: Z"
-   - Help them see the next constraint before it arrives
+### MECHANISM 5: BINARY SUCCESS CRITERIA
+Include the pre-computed 3 criteria in Section 5 (goodFixLooksLike.youWillKnowBecause).
+Format as 3 testable yes/no conditions. No tools, no vendors, no implementation details.
 
-## CRITICAL RULES (NON-NEGOTIABLE)
+## BANNED PHRASES (HARD RULE)
+Never use: might, may, appears, suggests, consider, could, generally, often, perhaps, seems, in many businesses, you might want to, it appears that, based on our analysis.
+Replace with: "Your answers show," "This structure causes," "This repeats because," "This fails when," "This is enforced by."
 
-1. OWNER'S SECTION 7 ANSWER IS THE CONSTRAINT
-   They chose this. You analyze it, never override it.
+## SPECIFICITY RULES
+Every section MUST include at least one concrete noun from their answers.
+Examples: office manager, QuickBooks, spreadsheet, voicemail, whiteboard, text messages, dispatcher.
+Avoid generic nouns (team, process, workflow) unless paired with a concrete noun.
+If a section lacks concrete nouns from their answers, the output failed.
 
-2. SYNTHESIS, NOT PARAPHRASE
-   Wrong: "You said follow-up is an issue" (just quoting)
-   Right: "Follow-up appears in 4 answers as where work dies. Email is the graveyard." (synthesis)
-
-3. QUOTE THEN SYNTHESIZE
-   Use quotation marks for their words. Then explain what the PATTERN means.
-
-4. NO SOFT LANGUAGE
-   Wrong: "You might want to consider..."
-   Wrong: "It appears that..."
-   Wrong: "Based on our analysis..."
-   Right: "This is blocking revenue conversion."
-   Right: "Your answers reveal..."
-   Right: "This pattern shows..."
-
-5. TWO PATHS ONLY
-   - DIY (what it takes to fix yourself)
-   - EP System Lane (ONE of the 4 below)
-   - If no lane fits: "This issue does not fit a fixed system lane."
-   - NEVER combine lanes or invent new ones.
-
-6. FINALITY
-   End with: "You have what you need to act. No meeting required unless you want EP to build the system for you."
+## CONTRADICTION HANDLING
+If contradictions exist in the pre-computed analysis, state them plainly:
+"These two statements conflict: [A] and [B]."
+Then tie to structural truth: "This conflict is how the constraint hides and repeats."
 
 ## EP SYSTEM LANES (ONLY THESE 4)
 - Intake Normalization System: Fixes how work enters, gets structured, and gets owned.
@@ -176,24 +164,64 @@ If your output reveals patterns they couldn't see, you SUCCEEDED.
 - Visibility & Control System: Gives owners real-time awareness without meetings.
 - Human Dependency Reduction System: Removes single points of failure and manual re-entry.
 
-If the constraint maps to "Decision Redundancy" or doesn't clearly fit, state: "This issue does not fit a fixed system lane."
+If category is "Decision Redundancy" or doesn't fit: "This issue does not fit a fixed system lane."
 
-## OUTPUT REQUIREMENTS BY SECTION
+## SECTION-BY-SECTION REQUIREMENTS
 
-Section 2 (Why This Is the Priority):
-- MUST include at least one pattern amplification
-- MUST surface contradictions if detected in the analysis
-- Frame as "your answers reveal" not "you said"
+SECTION 1 (primaryBottleneck):
+- constraint: Category label
+- ownerStatement: Their exact words from Section 7
+- inPlainTerms: STRUCTURAL TRUTH sentence (Mechanism 1)
 
-Section 3 (Cost of Inaction):
-- MUST include quantified costs (use the numbers provided)
-- MUST show annual impact where possible
-- Frame as compounding: "every week this continues..."
+SECTION 2 (whyThisIsPriority):
+- ruleExplanation: ENFORCEMENT CHAIN (Mechanism 2) + pattern amplification
+- supportingEvidence: 3-5 quotes with concrete nouns
+- notOpinion: "This is your stated priority. The structure validates it."
 
-Section 5 (What a Good Fix Looks Like):
-- MUST include second-order effects
-- Frame as "once fixed, you will face..."
-- Be specific to their situation
+SECTION 3 (costOfInaction):
+- ifIgnored: QUANTIFICATION LADDER (Mechanism 3) with annual impact
+- timeframeWarning: "Each week this continues..." with specific compounding
+- revenueLink: Direct revenue connection tied to their numbers
+
+SECTION 4 (whatNotToFixYet):
+- deprioritizedItem: Their tradeoff-2 answer verbatim
+- otherIssues: 1-2 real but secondary issues from their answers
+- reasoning: Why fixing these now does not change the primary constraint
+
+SECTION 5 (goodFixLooksLike):
+- successState: Conceptual end state (NOT technical)
+- youWillKnowBecause: BINARY SUCCESS CRITERIA (Mechanism 5) - 3 testable conditions
+- notPrescriptive: "THIS FIX FAILS IF" CLAUSE (Mechanism 4) + second-order effects
+
+SECTION 6 (twoPathsForward):
+DIY path with 3 conditions (not tools):
+- "Create a single source of truth for quote status"
+- "Ensure every quote has a next action date"
+- "Ensure follow-up is enforced without memory"
+EP path: ONE lane only, describe outcome, no packages or pricing.
+
+SECTION 7 (doesNotDo):
+5-7 items including: no roadmap, no custom consulting, no meetings required, no multiple priorities, no tool selection debate.
+
+SECTION 8 (finalityStatement):
+- statement: "You have what you need to act. No meeting required unless you want EP to build the system for you."
+- noUpsell: Close the conversation completely.
+
+## QUALITY GATES (SELF-CHECK BEFORE OUTPUT)
+Before returning JSON, verify ALL are true:
+[ ] Exactly 8 sections. No extras.
+[ ] One constraint only, from tradeoff-1.
+[ ] tradeoff-2 explicitly stated in Section 4.
+[ ] Structural Truth included in Section 1.
+[ ] Enforcement Chain included in Section 2.
+[ ] Quantification Ladder in Section 3 with annual figure.
+[ ] "Fix Fails If" clause in Section 5.
+[ ] 3 Binary Success Criteria in Section 5.
+[ ] Each section has 1+ concrete noun from their answers.
+[ ] NO banned phrases anywhere.
+[ ] Output reads like inevitability, not analysis.
+
+If any gate fails, rewrite before returning.
 
 ## OUTPUT FORMAT
 Return ONLY valid JSON with these EXACT field names:
@@ -202,33 +230,33 @@ Return ONLY valid JSON with these EXACT field names:
   "primaryBottleneck": {
     "constraint": "Category label",
     "ownerStatement": "Their exact words from Section 7",
-    "inPlainTerms": "One synthesized sentence about what this means"
+    "inPlainTerms": "STRUCTURAL TRUTH sentence"
   },
   "whyThisIsPriority": {
-    "ruleExplanation": "Pattern analysis showing WHY this is structural",
-    "supportingEvidence": ["Quote 1", "Quote 2", "Quote 3"],
-    "notOpinion": "This is your stated priority validated by pattern analysis"
+    "ruleExplanation": "ENFORCEMENT CHAIN formatted as Condition → Condition → Outcome",
+    "supportingEvidence": ["Quote with concrete noun 1", "Quote 2", "Quote 3"],
+    "notOpinion": "This is your stated priority. The structure validates it."
   },
   "costOfInaction": {
-    "ifIgnored": "What continues to happen with QUANTIFIED annual impact",
-    "timeframeWarning": "Every week this continues... with specific numbers",
-    "revenueLink": "Direct revenue connection with calculations"
+    "ifIgnored": "QUANTIFICATION LADDER with annual impact",
+    "timeframeWarning": "Each week this continues... with compounding specifics",
+    "revenueLink": "Direct revenue connection with their numbers"
   },
   "whatNotToFixYet": {
-    "deprioritizedItem": "Their tradeoff-2 answer",
-    "otherIssues": ["Other issues from their answers"],
-    "reasoning": "Why fixing these first would be premature"
+    "deprioritizedItem": "Their tradeoff-2 answer verbatim",
+    "otherIssues": ["Secondary issue 1"],
+    "reasoning": "Why fixing these now does not change the primary constraint"
   },
   "goodFixLooksLike": {
-    "successState": "What fixed looks like conceptually",
-    "youWillKnowBecause": "Observable change",
-    "notPrescriptive": "Includes second-order effects that will surface"
+    "successState": "Conceptual end state",
+    "youWillKnowBecause": "3 BINARY SUCCESS CRITERIA as testable statements",
+    "notPrescriptive": "THIS FIX FAILS IF clause + second-order effects"
   },
   "twoPathsForward": {
     "diyPath": {
-      "description": "What DIY requires",
-      "requires": "Time/resources needed",
-      "realistic": "Honest assessment"
+      "description": "DIY requires...",
+      "requires": "3 conditions phrased as outcomes not tools",
+      "realistic": "Honest assessment of DIY"
     },
     "epSystemPath": {
       "systemName": "Exact EP lane name",
@@ -236,15 +264,14 @@ Return ONLY valid JSON with these EXACT field names:
       "outcome": "What outcome it produces"
     }
   },
-  "doesNotDo": ["List of 4-5 disclaimers"],
+  "doesNotDo": ["No roadmap", "No custom consulting", "No meetings required", "No multiple priorities", "No tool selection debate"],
   "finalityStatement": {
-    "statement": "Finality message",
-    "noUpsell": "No meeting required message"
+    "statement": "You have what you need to act. No meeting required unless you want EP to build the system for you.",
+    "noUpsell": "This diagnostic is complete."
   }
 }
 
-Use these EXACT field names. Do not rename them.
-No markdown formatting - pure JSON object.`;
+Use these EXACT field names. No markdown. Pure JSON object.`;
 
 // ============================================================================
 // USER PROMPT BUILDER
@@ -293,6 +320,55 @@ function buildUserPrompt(
     `- If "${e.ifFixed}" → then "${e.thenExposed}"`
   ).join('\n');
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FORMAT THE 5 MANDATORY SYNTHESIS MECHANISMS
+  // ═══════════════════════════════════════════════════════════════════════════
+  const { synthesisMechanisms } = patternAnalysis;
+
+  // MECHANISM 1: Structural Truth
+  const structuralTruthSection = `STRUCTURAL TRUTH (use in Section 1 - primaryBottleneck.inPlainTerms):
+"${synthesisMechanisms.structuralTruth.templateHint}"
+Key Dependency: "${synthesisMechanisms.structuralTruth.keyDependency}" (appears ${synthesisMechanisms.structuralTruth.dependencyCount} times)`;
+
+  // MECHANISM 2: Enforcement Chain
+  const chainLinks = synthesisMechanisms.enforcementChain.links
+    .map((link, i) => {
+      const evidence = link.evidenceText ? ` [Evidence: "${link.evidenceText}"]` : '';
+      return `${i + 1}. ${link.condition}${evidence}`;
+    })
+    .join('\n');
+  const enforcementChainSection = `ENFORCEMENT CHAIN (use in Section 2 - whyThisIsPriority.ruleExplanation):
+${chainLinks}
+→ OUTCOME: ${synthesisMechanisms.enforcementChain.finalOutcome}
+
+Format as: "${synthesisMechanisms.enforcementChain.links.map(l => l.condition).join(' → ')} → ${synthesisMechanisms.enforcementChain.finalOutcome}"`;
+
+  // MECHANISM 3: Quantification Ladder
+  const ladderParts: string[] = [];
+  if (synthesisMechanisms.quantificationLadder.frequency) {
+    ladderParts.push(`Frequency: ${synthesisMechanisms.quantificationLadder.frequency.value}`);
+  }
+  if (synthesisMechanisms.quantificationLadder.volume) {
+    ladderParts.push(`Volume: ${synthesisMechanisms.quantificationLadder.volume.value}`);
+  }
+  if (synthesisMechanisms.quantificationLadder.time) {
+    ladderParts.push(`Time: ${synthesisMechanisms.quantificationLadder.time.value}`);
+  }
+  if (synthesisMechanisms.quantificationLadder.money) {
+    ladderParts.push(`Money: ${synthesisMechanisms.quantificationLadder.money.value}`);
+  }
+  const quantificationLadderSection = `QUANTIFICATION LADDER (use in Section 3 - costOfInaction):
+${ladderParts.length > 0 ? ladderParts.join('\n') : 'No explicit numbers found - use qualitative framing'}
+Summary: ${synthesisMechanisms.quantificationLadder.summary}`;
+
+  // MECHANISM 4: Fix Fails If
+  const fixFailsIfSection = `"THIS FIX FAILS IF" CLAUSE (use in Section 5 - goodFixLooksLike.notPrescriptive):
+"${synthesisMechanisms.fixFailsIf.sentence}"`;
+
+  // MECHANISM 5: Success Criteria
+  const successCriteriaSection = `BINARY SUCCESS CRITERIA (use in Section 5 - goodFixLooksLike.youWillKnowBecause):
+${synthesisMechanisms.successCriteria.map((c, i) => `${i + 1}. ${c.criterion}\n   Test: ${c.testMethod}`).join('\n')}`;
+
   return `## DIAGNOSTIC INPUT
 
 **Company:** ${companyName}
@@ -306,24 +382,34 @@ Owner's Exact Words: "${constraintResult.primaryConstraint.ownerStatement}"
 "${constraintResult.deprioritized.statement}"
 
 ## ═══════════════════════════════════════════════════════════════════════════
-## PRE-PROCESSED PATTERN ANALYSIS
-## USE THIS DATA TO SYNTHESIZE INSIGHTS - DO NOT JUST PARAPHRASE ANSWERS
+## 5 MANDATORY SYNTHESIS MECHANISMS (YOU MUST USE ALL OF THESE)
+## These are pre-computed. Include them in your output as specified.
 ## ═══════════════════════════════════════════════════════════════════════════
 
-### REPEATED ENTITIES (Structural Dependencies)
-These entities appear across multiple answers - this is structural, not incidental.
+### MECHANISM 1: ${structuralTruthSection}
+
+### MECHANISM 2: ${enforcementChainSection}
+
+### MECHANISM 3: ${quantificationLadderSection}
+
+### MECHANISM 4: ${fixFailsIfSection}
+
+### MECHANISM 5: ${successCriteriaSection}
+
+## ═══════════════════════════════════════════════════════════════════════════
+## PATTERN ANALYSIS (Supporting Data)
+## ═══════════════════════════════════════════════════════════════════════════
+
+### REPEATED ENTITIES
 ${repeatedEntitiesSection}
 
 ### DETECTED CONTRADICTIONS
-Statements that logically conflict - surface these, do not resolve them.
 ${contradictionsSection}
 
 ### QUANTIFIABLE DATA POINTS
-Use these numbers for annual impact calculations.
 ${quantifiableSection}
 
-### SECOND-ORDER EFFECTS TO SURFACE
-What fixing the constraint will expose next.
+### SECOND-ORDER EFFECTS
 ${secondOrderSection}
 
 ## ═══════════════════════════════════════════════════════════════════════════
@@ -331,7 +417,7 @@ ${secondOrderSection}
 ## SUPPORTING EVIDENCE (Direct quotes from earlier sections)
 ${constraintResult.primaryConstraint.supportingEvidence.map(e => `• "${e}"`).join('\n')}
 
-## ALL DIAGNOSTIC RESPONSES
+## ALL DIAGNOSTIC RESPONSES (for concrete nouns)
 ${formattedResponses}
 
 ## EP SYSTEM LANE FOR THIS CATEGORY
@@ -341,15 +427,13 @@ ${epLane ? `${epLane.name}: ${epLane.description}` : 'No fixed system lane fits 
 
 Generate the 8-section Revenue Friction Diagnostic output as JSON.
 
-CRITICAL INSTRUCTIONS:
-1. The owner's Section 7 answer IS the primary constraint - analyze it, don't override it
-2. USE THE PATTERN ANALYSIS ABOVE - this is your synthesis material
-3. Section 2 MUST include pattern amplification and any contradictions
-4. Section 3 MUST include quantified annual costs where numbers exist
-5. Section 5 MUST include second-order effects
-6. If the output just quotes their words back, you have FAILED
-7. No soft language - be direct
-8. End with finality`;
+CRITICAL REMINDERS:
+1. Section 7 answer IS the constraint - never override
+2. Include ALL 5 MECHANISMS in the specified sections
+3. Use CONCRETE NOUNS from their answers in every section
+4. NO banned phrases (might, may, appears, suggests, consider, could)
+5. Output must read like INEVITABILITY, not analysis
+6. End with finality - no meeting required`;
 }
 
 // ============================================================================
