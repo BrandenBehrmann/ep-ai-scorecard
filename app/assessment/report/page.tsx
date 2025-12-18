@@ -1,5 +1,9 @@
 'use client';
 
+// Revenue Friction Diagnostic - Report Page
+// December 2025 - v2 pivot
+// LOCKED 8-SECTION OUTPUT - No additional sections, no soft language
+
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -8,59 +12,23 @@ import { motion } from 'framer-motion';
 import {
   Loader2,
   AlertCircle,
-  Gauge,
-  Eye,
-  Zap,
+  AlertTriangle,
   Target,
-  RefreshCw,
-  Calculator,
-  TrendingUp,
-  TrendingDown,
-  FileText,
-  Lightbulb,
-  DollarSign,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Brain,
   Quote,
   ChevronRight,
-  Wrench,
-  Calendar,
-  AlertTriangle,
+  XCircle,
+  CheckCircle2,
+  ArrowRight,
+  Ban,
+  FileCheck,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import type { PremiumReportInsights } from '@/lib/premium-insights';
+import type { RevenueFrictionDiagnostic } from '@/lib/premium-insights';
+import { CONSTRAINT_CATEGORY_LABELS, type ConstraintCategory } from '@/lib/database.types';
 
-// Dimension config with icons
-const dimensionConfig: Record<string, { icon: typeof Gauge; color: string; label: string }> = {
-  control: { icon: Gauge, color: 'from-red-500 to-orange-500', label: 'Control' },
-  clarity: { icon: Eye, color: 'from-orange-500 to-amber-500', label: 'Clarity' },
-  leverage: { icon: Zap, color: 'from-amber-500 to-yellow-500', label: 'Leverage' },
-  friction: { icon: Target, color: 'from-yellow-500 to-lime-500', label: 'Friction' },
-  'change-readiness': { icon: RefreshCw, color: 'from-lime-500 to-green-500', label: 'Change Readiness' },
-  'ai-investment': { icon: Calculator, color: 'from-teal-500 to-cyan-500', label: 'AI Investment' },
-};
-
-// Types
-interface DimensionScore {
-  dimension: string;
-  label: string;
-  score: number;
-  maxScore: number;
-  percentage: number;
-  interpretation: 'critical' | 'needs-work' | 'stable' | 'strong';
-}
-
-interface ScoresData {
-  total: number;
-  percentage: number;
-  band: 'critical' | 'at-risk' | 'stable' | 'optimized';
-  bandLabel: string;
-  dimensions: DimensionScore[];
-  topPriorities: string[];
-  strengths: string[];
-}
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface AssessmentData {
   id: string;
@@ -69,24 +37,41 @@ interface AssessmentData {
   email: string;
   company: string;
   status: string;
-  scores: ScoresData | null;
-  insights?: PremiumReportInsights | null;
+  version?: 'v1_legacy' | 'v2_revenue_friction';
+  constraint_result?: {
+    primaryConstraint: {
+      category: ConstraintCategory;
+      label: string;
+      ownerStatement: string;
+      supportingEvidence: string[];
+    };
+    deprioritized: {
+      statement: string;
+    };
+  };
+  insights?: RevenueFrictionDiagnostic | null;
   responses?: Record<string, string | string[] | number>;
 }
 
-// Loading component
+// ============================================================================
+// LOADING COMPONENT
+// ============================================================================
+
 function ReportLoading({ message }: { message?: string }) {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="w-12 h-12 text-amber-700 animate-spin mx-auto mb-4" />
-        <p className="text-gray-600 dark:text-white/70">{message || 'Loading your report...'}</p>
+        <p className="text-gray-600 dark:text-white/70">{message || 'Loading your diagnostic...'}</p>
       </div>
     </div>
   );
 }
 
-// Main export with Suspense boundary
+// ============================================================================
+// MAIN EXPORT
+// ============================================================================
+
 export default function ReportPage() {
   return (
     <Suspense fallback={<ReportLoading />}>
@@ -95,647 +80,491 @@ export default function ReportPage() {
   );
 }
 
+// ============================================================================
+// REPORT CONTENT
+// ============================================================================
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
-  const [insights, setInsights] = useState<PremiumReportInsights | null>(null);
-  const [insightsLoading, setInsightsLoading] = useState(false);
-  const [insightsError, setInsightsError] = useState<string | null>(null);
-
   const token = searchParams.get('token');
 
+  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
+  const [diagnostic, setDiagnostic] = useState<RevenueFrictionDiagnostic | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [generatingDiagnostic, setGeneratingDiagnostic] = useState(false);
+
+  // Fetch assessment data
   useEffect(() => {
-    setMounted(true);
-
-    if (!token) {
-      setError('No assessment token provided');
-      setLoading(false);
-      return;
-    }
-
-    const fetchReport = async () => {
-      try {
-        const res = await fetch(`/api/assessments/${token}`);
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || 'Failed to load report');
-          setLoading(false);
-          return;
-        }
-
-        const assessmentData = data.assessment;
-        setAssessment(assessmentData);
-
-        if (assessmentData.insights && typeof assessmentData.insights === 'object') {
-          setInsights(assessmentData.insights as PremiumReportInsights);
-          setLoading(false);
-          return;
-        }
-
+    async function fetchAssessment() {
+      if (!token) {
+        setError('No assessment token provided');
         setLoading(false);
+        return;
+      }
 
-        if (['submitted', 'report_ready', 'released'].includes(assessmentData.status) && !assessmentData.insights) {
-          setInsightsLoading(true);
-          try {
-            const insightsRes = await fetch(`/api/insights/${token}`, { method: 'POST' });
-            const insightsData = await insightsRes.json();
+      try {
+        const response = await fetch(`/api/assessments/${token}`);
+        if (!response.ok) {
+          throw new Error('Assessment not found');
+        }
+        const data = await response.json();
+        setAssessment(data.assessment);
 
-            if (insightsRes.ok && insightsData.insights) {
-              setInsights(insightsData.insights as PremiumReportInsights);
-              setAssessment(prev => prev ? { ...prev, insights: insightsData.insights } : null);
-            } else {
-              setInsightsError(insightsData.error || 'Failed to generate insights');
-            }
-          } catch (err) {
-            console.error('Insights fetch error:', err);
-            setInsightsError('Failed to generate insights');
-          } finally {
-            setInsightsLoading(false);
-          }
+        // Check if we have insights already
+        if (data.assessment.insights) {
+          setDiagnostic(data.assessment.insights as RevenueFrictionDiagnostic);
         }
       } catch (err) {
-        console.error('Report fetch error:', err);
-        setError('Failed to load report');
+        setError(err instanceof Error ? err.message : 'Failed to load assessment');
+      } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchReport();
+    fetchAssessment();
   }, [token]);
 
-  if (!mounted || loading) {
+  // Generate diagnostic if not present
+  useEffect(() => {
+    async function generateDiagnostic() {
+      if (!assessment || diagnostic || generatingDiagnostic) return;
+
+      // Only generate for v2 assessments with valid status
+      const validStatuses = ['submitted', 'pending_review', 'report_ready', 'released'];
+      if (!validStatuses.includes(assessment.status)) return;
+      if (assessment.version === 'v1_legacy') return;
+
+      setGeneratingDiagnostic(true);
+      try {
+        const response = await fetch(`/api/insights/${token}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDiagnostic(data.insights as RevenueFrictionDiagnostic);
+        }
+      } catch (err) {
+        console.error('Failed to generate diagnostic:', err);
+      } finally {
+        setGeneratingDiagnostic(false);
+      }
+    }
+
+    generateDiagnostic();
+  }, [assessment, diagnostic, token, generatingDiagnostic]);
+
+  // Loading state
+  if (loading) {
     return <ReportLoading />;
   }
 
+  // Error state
   if (error || !assessment) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-600" />
-          </div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Report Not Available</h1>
-          <p className="text-gray-600 dark:text-white/70 mb-6">{error || 'Assessment not found'}</p>
-          <a href="/" className="px-6 py-3 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all inline-block">
-            Return Home
-          </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Gate: If report hasn't been released yet
-  if (assessment.status === 'pending_review' || assessment.status === 'in_progress') {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
-        <div className="text-center max-w-lg mx-auto px-6">
-          <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Clock className="w-10 h-10 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Your Report is Being Prepared</h1>
-          <p className="text-gray-600 dark:text-white/70 mb-6">
-            Our team is reviewing your assessment and adding personalized insights.
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Unable to Load Diagnostic
+          </h1>
+          <p className="text-gray-600 dark:text-white/70">
+            {error || 'The diagnostic could not be found.'}
           </p>
         </div>
       </div>
     );
   }
 
-  const scores = assessment.scores;
-  const bandColors = {
-    critical: 'bg-red-500',
-    'at-risk': 'bg-orange-500',
-    stable: 'bg-amber-500',
-    optimized: 'bg-green-500',
-  };
+  // Legacy v1 assessment
+  if (assessment.version === 'v1_legacy') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+          <FileCheck className="w-12 h-12 text-amber-600 mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Legacy Assessment
+          </h1>
+          <p className="text-gray-600 dark:text-white/70">
+            This is a legacy v1 assessment. The new Revenue Friction Diagnostic format is not available for legacy assessments.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not ready state
+  if (assessment.status === 'pending_review' || assessment.status === 'in_progress') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
+        <div className="text-center max-w-md p-8">
+          <Loader2 className="w-12 h-12 text-amber-600 animate-spin mx-auto mb-4" />
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Diagnostic Being Prepared
+          </h1>
+          <p className="text-gray-600 dark:text-white/70">
+            Your diagnostic is being finalized. Check back shortly.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Generating state
+  if (generatingDiagnostic) {
+    return <ReportLoading message="Generating your diagnostic..." />;
+  }
+
+  // No diagnostic yet
+  if (!diagnostic) {
+    return <ReportLoading message="Loading diagnostic data..." />;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MAIN REPORT - LOCKED 8 SECTIONS
+  // ═══════════════════════════════════════════════════════════════════════════
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
       {/* Header */}
-      <header className="bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-white/10">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
             <Image
-              src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
+              src={resolvedTheme === 'dark' ? '/images/ena-logo-dark.png' : '/images/ena-logo.png'}
               alt="Ena Pragma"
-              width={120}
-              height={40}
-              className="h-10 w-auto"
-              priority
+              width={32}
+              height={32}
             />
-            <ThemeToggle />
+            <span className="text-sm font-medium text-gray-900 dark:text-white">
+              Revenue Friction Diagnostic
+            </span>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-        {/* Loading/Error States */}
-        {insightsLoading && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-6">
-            <div className="flex items-center gap-4">
-              <Brain className="w-8 h-8 text-amber-600 animate-pulse" />
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Generating Your Diagnostic...</h3>
-                <p className="text-sm text-gray-600 dark:text-white/70">Analyzing your responses to find the root cause.</p>
-              </div>
-            </div>
-          </div>
-        )}
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-12">
+        {/* Company Header */}
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            {assessment.company}
+          </h1>
+          <p className="text-gray-600 dark:text-white/60">
+            Prepared for {assessment.name}
+          </p>
+        </div>
 
-        {insightsError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-xl p-6">
-            <div className="flex items-center gap-4">
-              <AlertCircle className="w-8 h-8 text-red-600" />
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">Generation Failed</h3>
-                <p className="text-sm text-gray-600 dark:text-white/70">{insightsError}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-        {/* SECTION 1: THE VERDICT */}
-        {/* ============================================================ */}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 1: PRIMARY BOTTLENECK
+            ═══════════════════════════════════════════════════════════════════ */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
+          className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-2xl p-8"
         >
-          <div className="flex flex-col lg:flex-row items-center gap-8">
-            {/* Score Circle */}
-            {scores && (
-              <div className="relative flex-shrink-0">
-                <svg className="w-36 h-36 transform -rotate-90">
-                  <circle cx="72" cy="72" r="64" fill="none" stroke="currentColor" strokeWidth="10" className="text-gray-200 dark:text-white/10" />
-                  <motion.circle
-                    cx="72" cy="72" r="64" fill="none" stroke="currentColor" strokeWidth="10" strokeLinecap="round"
-                    className={`${bandColors[scores.band].replace('bg-', 'text-')}`}
-                    strokeDasharray={`${(scores.percentage / 100) * 402} 402`}
-                    initial={{ strokeDasharray: '0 402' }}
-                    animate={{ strokeDasharray: `${(scores.percentage / 100) * 402} 402` }}
-                    transition={{ duration: 1.5, ease: 'easeOut' }}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">{scores.percentage}</span>
-                  <span className="text-xs text-gray-500 dark:text-white/50">/ 100</span>
-                </div>
-              </div>
-            )}
-
-            {/* Verdict Text */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className={`inline-block px-4 py-1.5 rounded-full text-white font-semibold text-sm mb-3 ${scores ? bandColors[scores.band] : 'bg-gray-500'}`}>
-                {insights?.executiveSummary?.readinessLevel || scores?.bandLabel || 'Calculating...'}
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {assessment.company}
-              </h1>
-              <p className="text-lg text-gray-700 dark:text-white/80 mb-4">
-                {insights?.executiveSummary?.verdict || 'Your business diagnostic is ready.'}
-              </p>
-
-              {/* If Nothing Changes / If You Act */}
-              {insights?.executiveSummary && (
-                <div className="grid sm:grid-cols-2 gap-4 mt-6">
-                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border-l-4 border-red-500">
-                    <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium text-sm mb-1">
-                      <AlertTriangle className="w-4 h-4" />
-                      If Nothing Changes
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-white/70">{insights.executiveSummary.inOneYear}</p>
-                  </div>
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border-l-4 border-green-500">
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-medium text-sm mb-1">
-                      <TrendingUp className="w-4 h-4" />
-                      If You Act
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-white/70">{insights.executiveSummary.ifYouAct}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center gap-3 mb-4">
+            <Target className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <h2 className="text-sm font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
+              Primary Bottleneck
+            </h2>
           </div>
+
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            {diagnostic.primaryBottleneck.constraint}
+          </h3>
+
+          <blockquote className="border-l-4 border-red-400 pl-4 my-6">
+            <Quote className="w-5 h-5 text-red-400 mb-2" />
+            <p className="text-lg text-gray-800 dark:text-white/90 italic">
+              &ldquo;{diagnostic.primaryBottleneck.ownerStatement}&rdquo;
+            </p>
+            <cite className="text-sm text-gray-600 dark:text-white/60 mt-2 block">
+              — Your stated constraint
+            </cite>
+          </blockquote>
+
+          <p className="text-gray-700 dark:text-white/80">
+            {diagnostic.primaryBottleneck.inPlainTerms}
+          </p>
         </motion.section>
 
-        {/* ============================================================ */}
-        {/* SECTION 2: THE DIAGNOSIS (The $1,500 Value) */}
-        {/* ============================================================ */}
-        {insights?.coreDiagnosis && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-6 sm:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-amber-200 dark:bg-amber-800/40 rounded-xl">
-                <Lightbulb className="w-6 h-6 text-amber-700 dark:text-amber-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">The Core Diagnosis</h2>
-                <p className="text-sm text-amber-700 dark:text-amber-400">The insight that explains everything</p>
-              </div>
-            </div>
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 2: WHY THIS IS THE PRIORITY
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-8"
+        >
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+            Why This Is the Priority
+          </h2>
 
-            {/* Governing Thought */}
-            <div className="bg-white/60 dark:bg-black/20 rounded-lg p-5 mb-6 border border-amber-200/50 dark:border-amber-700/30">
-              <p className="text-xl font-semibold text-gray-900 dark:text-white leading-relaxed">
-                {insights.coreDiagnosis.governingThought}
+          <p className="text-gray-700 dark:text-white/80 mb-6">
+            {diagnostic.whyThisIsPriority.ruleExplanation}
+          </p>
+
+          {diagnostic.whyThisIsPriority.supportingEvidence.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <p className="text-sm font-medium text-gray-600 dark:text-white/60 uppercase tracking-wide">
+                Supporting Evidence (Your Words)
               </p>
-            </div>
-
-            {/* Thesis */}
-            <p className="text-gray-700 dark:text-white/80 mb-6 leading-relaxed">
-              {insights.coreDiagnosis.thesis}
-            </p>
-
-            {/* Evidence Chain */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wide">Evidence From Your Responses</h3>
-              {insights.coreDiagnosis.evidenceChain.map((evidence, i) => (
-                <div key={i} className="flex gap-4">
-                  <Quote className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <p className="text-gray-900 dark:text-white font-medium italic">"{evidence.quote}"</p>
-                    <p className="text-sm text-gray-600 dark:text-white/60 mt-1">{evidence.interpretation}</p>
-                  </div>
+              {diagnostic.whyThisIsPriority.supportingEvidence.map((evidence, i) => (
+                <div key={i} className="flex items-start gap-3 bg-gray-50 dark:bg-white/5 rounded-lg p-3">
+                  <Quote className="w-4 h-4 text-amber-600 flex-shrink-0 mt-1" />
+                  <p className="text-gray-700 dark:text-white/80 italic text-sm">
+                    &ldquo;{evidence}&rdquo;
+                  </p>
                 </div>
               ))}
             </div>
-          </motion.section>
-        )}
+          )}
 
-        {/* ============================================================ */}
-        {/* SECTION 3: ROOT CAUSE ANALYSIS */}
-        {/* ============================================================ */}
-        {insights?.rootCauseAnalysis && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
-          >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Root Cause Chain</h2>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg p-4">
+            <p className="text-amber-800 dark:text-amber-200 text-sm font-medium">
+              {diagnostic.whyThisIsPriority.notOpinion}
+            </p>
+          </div>
+        </motion.section>
 
-            {/* Visual Chain */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-2 mb-6">
-              <div className="flex-1 bg-red-50 dark:bg-red-900/20 rounded-lg p-4 text-center">
-                <div className="text-xs font-medium text-red-600 dark:text-red-400 mb-1">SURFACE SYMPTOM</div>
-                <p className="text-sm text-gray-900 dark:text-white">{insights.rootCauseAnalysis.surfaceSymptom}</p>
-              </div>
-              <ChevronRight className="w-6 h-6 text-gray-400 self-center hidden sm:block" />
-              <ArrowRight className="w-6 h-6 text-gray-400 self-center rotate-90 sm:hidden mx-auto" />
-              <div className="flex-1 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 text-center">
-                <div className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">INTERMEDIATE ISSUE</div>
-                <p className="text-sm text-gray-900 dark:text-white">{insights.rootCauseAnalysis.intermediateIssue}</p>
-              </div>
-              <ChevronRight className="w-6 h-6 text-gray-400 self-center hidden sm:block" />
-              <ArrowRight className="w-6 h-6 text-gray-400 self-center rotate-90 sm:hidden mx-auto" />
-              <div className="flex-1 bg-amber-100 dark:bg-amber-900/30 rounded-lg p-4 text-center border-2 border-amber-400">
-                <div className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">ROOT CAUSE</div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{insights.rootCauseAnalysis.rootCause}</p>
-              </div>
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 3: COST OF INACTION
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800/50 rounded-2xl p-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              Cost of Inaction
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-gray-700 dark:text-white/80">
+              {diagnostic.costOfInaction.ifIgnored}
+            </p>
+
+            <div className="bg-orange-100 dark:bg-orange-900/30 rounded-lg p-4">
+              <p className="text-orange-800 dark:text-orange-200 font-medium">
+                {diagnostic.costOfInaction.timeframeWarning}
+              </p>
             </div>
 
-            <p className="text-gray-700 dark:text-white/80 leading-relaxed mb-4">{insights.rootCauseAnalysis.explanation}</p>
+            <p className="text-gray-700 dark:text-white/80 font-medium">
+              {diagnostic.costOfInaction.revenueLink}
+            </p>
+          </div>
+        </motion.section>
 
-            {/* Supporting Evidence */}
-            <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-white/70 mb-2">Supporting Evidence:</h4>
-              <ul className="space-y-1">
-                {insights.rootCauseAnalysis.supportingEvidence.map((evidence, i) => (
-                  <li key={i} className="text-sm text-gray-600 dark:text-white/60 flex items-start gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                    {evidence}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 4: WHAT NOT TO FIX YET
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <Ban className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              What Not to Fix Yet
+            </h2>
+          </div>
+
+          <div className="bg-gray-50 dark:bg-white/5 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-600 dark:text-white/60 mb-2">You chose to deprioritize:</p>
+            <p className="text-gray-800 dark:text-white/90 font-medium">
+              &ldquo;{diagnostic.whatNotToFixYet.deprioritizedItem}&rdquo;
+            </p>
+          </div>
+
+          {diagnostic.whatNotToFixYet.otherIssues.length > 0 && (
+            <div className="space-y-2 mb-4">
+              <p className="text-sm text-gray-600 dark:text-white/60">Other secondary issues:</p>
+              <ul className="space-y-2">
+                {diagnostic.whatNotToFixYet.otherIssues.map((issue, i) => (
+                  <li key={i} className="flex items-start gap-2 text-gray-700 dark:text-white/80">
+                    <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                    {issue}
                   </li>
                 ))}
               </ul>
             </div>
-          </motion.section>
-        )}
+          )}
 
-        {/* ============================================================ */}
-        {/* SECTION 4: DIMENSION SCORES */}
-        {/* ============================================================ */}
-        {scores && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Dimension Breakdown</h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {scores.dimensions.map((dim, index) => {
-                const config = dimensionConfig[dim.dimension];
-                const Icon = config?.icon || Gauge;
-                const dimInsight = insights?.dimensionInsights?.find(d => d.dimension === dim.dimension);
+          <p className="text-gray-600 dark:text-white/70 text-sm">
+            {diagnostic.whatNotToFixYet.reasoning}
+          </p>
+        </motion.section>
 
-                return (
-                  <motion.div
-                    key={dim.dimension}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-5"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg bg-gradient-to-br ${config?.color || 'from-gray-500 to-gray-600'} text-white`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">{dim.label}</h3>
-                        <span className={`text-xs font-medium ${
-                          dim.interpretation === 'critical' ? 'text-red-600' :
-                          dim.interpretation === 'needs-work' ? 'text-orange-600' :
-                          dim.interpretation === 'stable' ? 'text-amber-600' : 'text-green-600'
-                        }`}>
-                          {dim.interpretation.replace('-', ' ')}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-gray-900 dark:text-white">{dim.percentage}</span>
-                        <span className="text-gray-500 dark:text-white/50 text-sm">%</span>
-                      </div>
-                    </div>
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 5: WHAT A GOOD FIX LOOKS LIKE
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-2xl p-8"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              What a Good Fix Looks Like
+            </h2>
+          </div>
 
-                    {/* Progress bar */}
-                    <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden mb-3">
-                      <motion.div
-                        className={`h-full rounded-full ${
-                          dim.percentage >= 80 ? 'bg-green-500' :
-                          dim.percentage >= 60 ? 'bg-amber-500' :
-                          dim.percentage >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                        }`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${dim.percentage}%` }}
-                        transition={{ duration: 0.8, delay: 0.3 + index * 0.05 }}
-                      />
-                    </div>
-
-                    {/* Insight */}
-                    {dimInsight && (
-                      <p className="text-sm text-gray-600 dark:text-white/70">{dimInsight.diagnosis}</p>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.section>
-        )}
-
-        {/* ============================================================ */}
-        {/* SECTION 5: FINANCIAL IMPACT */}
-        {/* ============================================================ */}
-        {insights?.financialImpact && insights.financialImpact.totalOpportunityCost > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
-                <DollarSign className="w-6 h-6 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Financial Impact</h2>
-                <p className="text-sm text-gray-500 dark:text-white/50">Quantified costs with calculations</p>
-              </div>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-white/60 mb-2">Success state:</p>
+              <p className="text-gray-800 dark:text-white/90 font-medium">
+                {diagnostic.goodFixLooksLike.successState}
+              </p>
             </div>
 
-            {/* Total */}
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 mb-6 text-center">
-              <div className="text-sm text-red-600 dark:text-red-400 font-medium mb-1">Estimated Annual Impact</div>
-              <div className="text-4xl font-bold text-red-700 dark:text-red-400">
-                ${insights.financialImpact.totalOpportunityCost.toLocaleString()}
-              </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-white/60 mb-2">You will know because:</p>
+              <p className="text-gray-800 dark:text-white/90">
+                {diagnostic.goodFixLooksLike.youWillKnowBecause}
+              </p>
             </div>
 
-            {/* Calculations */}
-            <div className="space-y-4 mb-6">
-              {insights.financialImpact.calculations.map((calc, i) => (
-                <div key={i} className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium text-gray-900 dark:text-white">{calc.item}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      calc.basis === 'from-your-answers' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                      calc.basis === 'industry-average' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                      'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
-                      {calc.basis === 'from-your-answers' ? 'Your Data' :
-                       calc.basis === 'industry-average' ? 'Industry Avg' : 'Conservative'}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-700 dark:text-white/70 mb-1">{calc.yourData}</div>
-                  <div className="text-sm text-gray-600 dark:text-white/60 font-mono bg-gray-100 dark:bg-white/10 px-2 py-1 rounded">{calc.calculation}</div>
-                  <div className="text-lg font-semibold text-red-600 dark:text-red-400 mt-2">
-                    ${calc.annualImpact.toLocaleString()}/year
-                  </div>
+            <div className="bg-green-100 dark:bg-green-900/30 rounded-lg p-4">
+              <p className="text-green-800 dark:text-green-200 text-sm">
+                {diagnostic.goodFixLooksLike.notPrescriptive}
+              </p>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 6: TWO PATHS FORWARD
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="space-y-6"
+        >
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white text-center">
+            Two Paths Forward
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* DIY Path */}
+            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+                Do It Yourself
+              </h3>
+              <p className="text-gray-700 dark:text-white/80 mb-4">
+                {diagnostic.twoPathsForward.diyPath.description}
+              </p>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-gray-600 dark:text-white/60">Requires: </span>
+                  <span className="text-gray-800 dark:text-white/90">
+                    {diagnostic.twoPathsForward.diyPath.requires}
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            {/* Bottom Line */}
-            <div className="text-sm text-gray-600 dark:text-white/60 border-t border-gray-200 dark:border-white/10 pt-4">
-              <p className="italic">{insights.financialImpact.bottomLine}</p>
-            </div>
-          </motion.section>
-        )}
-
-        {/* ============================================================ */}
-        {/* SECTION 6: ACTION PLAN */}
-        {/* ============================================================ */}
-        {insights?.actionPlan && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-                <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Action Plan</h2>
-                <p className="text-sm text-gray-500 dark:text-white/50">What to do and in what order</p>
+                <div>
+                  <span className="text-gray-600 dark:text-white/60">Realistic if: </span>
+                  <span className="text-gray-800 dark:text-white/90">
+                    {diagnostic.twoPathsForward.diyPath.realistic}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* This Week */}
-            {insights.actionPlan.thisWeek.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" /> This Week
+            {/* EP System Path */}
+            {diagnostic.twoPathsForward.epSystemPath ? (
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+                  {diagnostic.twoPathsForward.epSystemPath.systemName}
                 </h3>
-                <div className="space-y-4">
-                  {insights.actionPlan.thisWeek.map((action, i) => (
-                    <div key={i} className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border-l-4 border-green-500">
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{action.action}</h4>
-                        {action.canEPDoThis && (
-                          <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">EP Can Build</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-white/70 mb-3">{action.why}</p>
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-white/50 mb-3">
-                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {action.timeRequired}</span>
-                        <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> {action.cost}</span>
-                      </div>
-                      <div className="bg-white/60 dark:bg-black/20 rounded p-3">
-                        <div className="text-xs font-medium text-gray-700 dark:text-white/70 mb-2">Steps:</div>
-                        <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600 dark:text-white/60">
-                          {action.steps.map((step, j) => <li key={j}>{step}</li>)}
-                        </ol>
-                      </div>
-                      <div className="mt-3 text-sm">
-                        <span className="text-gray-500 dark:text-white/50">Result: </span>
-                        <span className="text-gray-900 dark:text-white">{action.result}</span>
-                      </div>
-                    </div>
-                  ))}
+                <p className="text-gray-700 dark:text-white/80 mb-4">
+                  {diagnostic.twoPathsForward.epSystemPath.whatItDoes}
+                </p>
+                <div className="bg-amber-100 dark:bg-amber-900/30 rounded-lg p-3">
+                  <p className="text-amber-800 dark:text-amber-200 text-sm font-medium">
+                    Outcome: {diagnostic.twoPathsForward.epSystemPath.outcome}
+                  </p>
                 </div>
+              </div>
+            ) : (
+              <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+                  No Fixed System Lane
+                </h3>
+                <p className="text-gray-600 dark:text-white/70">
+                  {diagnostic.twoPathsForward.noLaneFits}
+                </p>
               </div>
             )}
+          </div>
+        </motion.section>
 
-            {/* This Month */}
-            {insights.actionPlan.thisMonth.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" /> This Month
-                </h3>
-                <div className="space-y-3">
-                  {insights.actionPlan.thisMonth.map((action, i) => (
-                    <div key={i} className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border-l-4 border-amber-500">
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{action.action}</h4>
-                        {action.canEPDoThis && (
-                          <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-2 py-0.5 rounded-full">EP Can Build</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-white/70">{action.why}</p>
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-white/50 mt-2">
-                        <span><Clock className="w-3 h-3 inline mr-1" />{action.timeRequired}</span>
-                        <span><DollarSign className="w-3 h-3 inline mr-1" />{action.cost}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.section>
-        )}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 7: WHAT THIS DIAGNOSTIC DOES NOT DO
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-gray-100 dark:bg-white/5 rounded-2xl p-8"
+        >
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+            What This Diagnostic Does Not Do
+          </h2>
 
-        {/* ============================================================ */}
-        {/* SECTION 7: WHAT EP CAN BUILD FOR YOU */}
-        {/* ============================================================ */}
-        {insights?.epImplementations && insights.epImplementations.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 sm:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-                <Wrench className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">What EP Can Build For You</h2>
-                <p className="text-sm text-gray-500 dark:text-white/50">We implement, you focus on your business</p>
-              </div>
-            </div>
+          <ul className="space-y-2">
+            {diagnostic.doesNotDo.map((item, i) => (
+              <li key={i} className="flex items-start gap-3 text-gray-600 dark:text-white/70">
+                <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </motion.section>
 
-            <div className="space-y-4">
-              {insights.epImplementations.map((impl, i) => (
-                <div key={i} className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border-l-4 border-purple-500">
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{impl.title}</h4>
-                  <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <div className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">What We Build:</div>
-                      <p className="text-gray-700 dark:text-white/80">{impl.whatEPBuilds}</p>
-                    </div>
-                    <div>
-                      <div className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-1">Your Problem:</div>
-                      <p className="text-gray-700 dark:text-white/80 italic">&ldquo;{impl.yourProblem}&rdquo;</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
-                    <div className="flex flex-wrap justify-between gap-2 text-sm">
-                      <span className="text-gray-600 dark:text-white/70"><strong>Outcome:</strong> {impl.outcome}</span>
-                      <span className="text-gray-500 dark:text-white/50">{impl.timeframe} • {impl.investmentRange}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {/* ============================================================ */}
-        {/* SECTION 8: NEXT STEPS / CTA */}
-        {/* ============================================================ */}
-        {insights?.nextSteps && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-white/10 dark:to-white/5 rounded-xl p-6 sm:p-8 text-white"
-          >
-            <h2 className="text-2xl font-bold mb-2">Three Paths Forward</h2>
-            <p className="text-white/70 mb-6">Choose what fits your situation.</p>
-
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* DIY */}
-              <div className="bg-white/10 rounded-lg p-5">
-                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.diy.title}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.diy.description}</p>
-                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.diy.forYouIf}</p>
-                <p className="text-white/40 text-xs">{insights.nextSteps.diy.epRole}</p>
-              </div>
-
-              {/* Jumpstart - highlighted */}
-              <div className="bg-purple-600/20 border border-purple-500/30 rounded-lg p-5">
-                <div className="text-purple-400 font-bold text-lg mb-2">{insights.nextSteps.jumpstart.title}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.jumpstart.description}</p>
-                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.jumpstart.forYouIf}</p>
-                <p className="text-purple-400 text-sm font-medium">{insights.nextSteps.jumpstart.investment}</p>
-              </div>
-
-              {/* Partnership */}
-              <div className="bg-white/10 rounded-lg p-5">
-                <div className="text-amber-400 font-bold text-lg mb-2">{insights.nextSteps.partnership.title}</div>
-                <p className="text-white/80 text-sm mb-3">{insights.nextSteps.partnership.description}</p>
-                <p className="text-white/50 text-xs mb-2">For you if: {insights.nextSteps.partnership.forYouIf}</p>
-                <p className="text-amber-400 text-sm font-medium">{insights.nextSteps.partnership.investment}</p>
-              </div>
-            </div>
-
-            <div className="mt-8 text-center">
-              <a
-                href="mailto:hello@enapragma.com?subject=Pragma%20Score%20Follow-up"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all"
-              >
-                Schedule a Call
-                <ArrowRight className="w-4 h-4" />
-              </a>
-              <p className="text-white/50 text-sm mt-3">No pressure. Just clarity on which option fits.</p>
-            </div>
-          </motion.section>
-        )}
+        {/* ═══════════════════════════════════════════════════════════════════
+            SECTION 8: FINALITY STATEMENT
+            ═══════════════════════════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-gray-900 dark:bg-white/10 rounded-2xl p-8 text-center"
+        >
+          <p className="text-xl font-bold text-white mb-4">
+            {diagnostic.finalityStatement.statement}
+          </p>
+          <p className="text-white/70">
+            {diagnostic.finalityStatement.noUpsell}
+          </p>
+        </motion.section>
 
         {/* Footer */}
-        <div className="text-center text-sm text-gray-500 dark:text-white/40 pt-8 border-t border-gray-200 dark:border-white/10">
-          <p>Generated by Ena Score • Ena Pragma Consulting</p>
-          <p className="mt-1">Report Date: {new Date().toLocaleDateString()}</p>
-        </div>
+        <footer className="text-center py-8 border-t border-gray-200 dark:border-white/10">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Image
+              src={resolvedTheme === 'dark' ? '/images/ena-logo-dark.png' : '/images/ena-logo.png'}
+              alt="Ena Pragma"
+              width={24}
+              height={24}
+            />
+            <span className="text-sm text-gray-600 dark:text-white/60">
+              Revenue Friction Diagnostic by Ena Pragma
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-white/40">
+            Generated {new Date(diagnostic.generatedAt).toLocaleDateString()}
+          </p>
+        </footer>
       </main>
     </div>
   );

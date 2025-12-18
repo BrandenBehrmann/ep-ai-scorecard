@@ -1,7 +1,10 @@
 // app/api/assessments/[token]/route.ts
+// Revenue Friction Diagnostic - Assessment API
+// December 2025 - v2 pivot with legacy support
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { calculateScores } from '@/lib/scoring';
+import { calculateConstraint, calculateScores, isV2Assessment } from '@/lib/scoring';
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +46,16 @@ export async function PATCH(
     const body = await request.json();
     const supabase = createServerClient();
 
+    // First, get the current assessment to check version
+    const { data: currentAssessment } = await supabase
+      .from('assessments')
+      .select('version')
+      .eq('token', token)
+      .single();
+
+    const version = currentAssessment?.version || 'v2_revenue_friction';
+    const isV2 = isV2Assessment(version);
+
     const updateData: Record<string, unknown> = {};
 
     if (body.responses !== undefined) {
@@ -54,24 +67,39 @@ export async function PATCH(
     if (body.status !== undefined) {
       updateData.status = body.status;
 
-      // Calculate scores when submitting (either submitted or pending_review)
+      // Calculate scores/constraints when submitting
       if ((body.status === 'submitted' || body.status === 'pending_review') && body.responses) {
-        const scores = calculateScores(body.responses);
-        updateData.scores = {
-          total: scores.totalScore,
-          percentage: scores.percentage,
-          band: scores.band,
-          bandLabel: scores.bandLabel,
-          control: scores.dimensions.find(d => d.dimension === 'control')?.score || 0,
-          clarity: scores.dimensions.find(d => d.dimension === 'clarity')?.score || 0,
-          leverage: scores.dimensions.find(d => d.dimension === 'leverage')?.score || 0,
-          friction: scores.dimensions.find(d => d.dimension === 'friction')?.score || 0,
-          changeReadiness: scores.dimensions.find(d => d.dimension === 'change-readiness')?.score || 0,
-          aiInvestment: scores.dimensions.find(d => d.dimension === 'ai-investment')?.score || 0,
-          dimensions: scores.dimensions,
-          topPriorities: scores.topPriorities,
-          strengths: scores.strengths,
-        };
+        if (isV2) {
+          // ─────────────────────────────────────────────────────────────────
+          // v2: Revenue Friction Diagnostic
+          // Calculate constraint based on Section 7 (owner-defined)
+          // ─────────────────────────────────────────────────────────────────
+          const constraintResult = calculateConstraint(body.responses);
+          updateData.constraint_result = constraintResult;
+
+          // Keep scores null for v2 - we don't use dimension scoring
+          updateData.scores = null;
+        } else {
+          // ─────────────────────────────────────────────────────────────────
+          // v1 Legacy: Original dimension scoring
+          // ─────────────────────────────────────────────────────────────────
+          const scores = calculateScores(body.responses);
+          updateData.scores = {
+            total: scores.totalScore,
+            percentage: scores.percentage,
+            band: scores.band,
+            bandLabel: scores.bandLabel,
+            control: scores.dimensions.find(d => d.dimension === 'control')?.score || 0,
+            clarity: scores.dimensions.find(d => d.dimension === 'clarity')?.score || 0,
+            leverage: scores.dimensions.find(d => d.dimension === 'leverage')?.score || 0,
+            friction: scores.dimensions.find(d => d.dimension === 'friction')?.score || 0,
+            changeReadiness: scores.dimensions.find(d => d.dimension === 'change-readiness')?.score || 0,
+            aiInvestment: scores.dimensions.find(d => d.dimension === 'ai-investment')?.score || 0,
+            dimensions: scores.dimensions,
+            topPriorities: scores.topPriorities,
+            strengths: scores.strengths,
+          };
+        }
       }
     }
 

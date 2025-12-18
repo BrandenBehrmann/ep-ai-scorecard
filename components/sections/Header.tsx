@@ -23,7 +23,7 @@ export function Header() {
   }, []);
 
   const navLinks = [
-    { href: '#dimensions', label: 'What We Measure' },
+    { href: '#constraints', label: 'What We Identify' },
     { href: '#how-it-works', label: 'How It Works' },
     { href: '#pricing', label: 'Pricing' },
     { href: '#faq', label: 'FAQ' },
@@ -51,8 +51,8 @@ export function Header() {
                 priority
               />
             )}
-            <span className="text-xl font-bold text-gray-900 dark:text-white">
-              Ena Score
+            <span className="text-lg font-bold text-gray-900 dark:text-white hidden lg:block">
+              Revenue Friction Diagnostic
             </span>
           </Link>
 
@@ -76,7 +76,7 @@ export function Header() {
               href="/assessment/start"
               className="hidden sm:inline-flex px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold rounded-lg transition-colors"
             >
-              Start Assessment
+              Start Diagnostic
             </Link>
 
             {/* Mobile Menu Button */}
@@ -112,7 +112,7 @@ export function Header() {
                 href="/assessment/start"
                 className="mt-2 px-5 py-3 bg-amber-700 hover:bg-amber-800 text-white text-center font-semibold rounded-lg transition-colors"
               >
-                Start Assessment
+                Start Diagnostic
               </Link>
             </div>
           </nav>

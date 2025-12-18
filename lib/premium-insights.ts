@@ -1,15 +1,24 @@
-// Pragma Score Premium Insights Generator
-// $1,500 Value Business Diagnostic - December 2025
-// Uses ONLY data provided by the customer - NO invented numbers
+// lib/premium-insights.ts
+// Revenue Friction Diagnostic - AI Explanation Generator
+// December 2025 - v2 pivot
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// CRITICAL RULES FOR THIS FILE:
+//
+// 1. Claude EXPLAINS rule-based results. Claude does NOT prioritize or judge.
+// 2. The primary constraint was already determined by Section 7.
+// 3. Claude's job is to explain WHY this makes sense based on their answers.
+// 4. Every conclusion must be framed as: "This is the constraint preventing
+//    effort from converting into revenue"
+// 5. Two paths only: DIY or EP System Lane
+// 6. If the output opens conversation, it failed.
+//    If it ends debate, it succeeded.
+// ─────────────────────────────────────────────────────────────────────────────
 
 import OpenAI from 'openai';
-import {
-  extractBusinessProfile,
-  parseHourlyRate,
-  parseEmployeeCount,
-  parseAnnualRevenue,
-  type BusinessProfile
-} from './scoring';
+import { ConstraintResult, ConstraintCategory } from './database.types';
+import { getEPSystemLane } from './scoring';
+import { QUESTION_LABELS } from './assessment-questions';
 
 // Lazy initialization - avoid module-level instantiation for build compatibility
 let openaiClient: OpenAI | null = null;
@@ -24,516 +33,404 @@ function getOpenAIClient(): OpenAI {
 }
 
 // ============================================================================
-// TYPE DEFINITIONS
+// TYPES - LOCKED 8-SECTION OUTPUT
 // ============================================================================
 
-export interface AhaMoment {
-  headline: string; // The one-line insight
-  explanation: string; // Why this matters
-  evidence: string[]; // Their exact quotes that prove it
-  implication: string; // What happens if they ignore this
-}
-
-export interface FinancialCalculation {
-  item: string;
-  yourData: string; // Quote the data they gave us
-  calculation: string; // Show the actual math
-  annualImpact: number;
-  basis: 'from-your-answers' | 'industry-average' | 'conservative-estimate';
-}
-
-export interface EPImplementation {
-  title: string;
-  whatEPBuilds: string; // Specific deliverable
-  yourProblem: string; // Quote their specific issue
-  outcome: string; // What changes
-  timeframe: string;
-  investmentRange: string;
-}
-
-export interface ActionItem {
-  action: string;
-  why: string; // Tie to their specific quote
-  steps: string[];
-  timeRequired: string;
-  cost: string;
-  result: string;
-  canEPDoThis: boolean; // Can EP implement this for them
-}
-
-export interface DimensionAnalysis {
-  dimension: string;
-  label: string;
-  score: number;
-  maxScore: number;
-  percentage: number;
-  interpretation: 'critical' | 'needs-work' | 'stable' | 'strong';
-  diagnosis: string;
-  yourQuote: string; // Their exact words
-  whatThisCosts: string; // Quantified in their terms
-  quickFix: string;
-}
-
-export interface PremiumReportInsights {
+export interface RevenueFrictionDiagnostic {
+  version: 'v2_revenue_friction';
   generatedAt: string;
-  assessmentId: string;
   companyName: string;
   contactName: string;
 
-  // Business Profile (from their answers)
-  businessProfile: {
-    revenue: string;
-    employees: string;
-    industry: string;
-    ownerHourlyValue: string;
-    revenueGoal: string;
-    biggestConstraint: string;
+  // SECTION 1: Primary Bottleneck
+  primaryBottleneck: {
+    constraint: string;           // Category label
+    ownerStatement: string;       // Their exact words
+    inPlainTerms: string;         // One sentence explanation
   };
 
-  // THE AHA MOMENT (The insight worth $1,500)
-  ahaMoment: AhaMoment;
-
-  // Executive Summary
-  executiveSummary: {
-    verdict: string;
-    readinessScore: number;
-    readinessLevel: string;
-    inOneYear: string;
-    ifYouAct: string;
+  // SECTION 2: Why This Is the Priority
+  whyThisIsPriority: {
+    ruleExplanation: string;      // "You identified this as primary because..."
+    supportingEvidence: string[]; // 3-5 quotes from earlier answers
+    notOpinion: string;           // "This is your stated priority, not our assessment"
   };
 
-  // Root Cause
-  rootCause: {
-    surface: string;
-    underlying: string;
-    root: string;
-    howWeKnow: string[];
+  // SECTION 3: Cost of Inaction
+  costOfInaction: {
+    ifIgnored: string;            // What continues/worsens
+    timeframeWarning: string;     // "Every week/month this continues..."
+    revenueLink: string;          // How this blocks effort → revenue
   };
 
-  // Dimension Breakdown
-  dimensionInsights: DimensionAnalysis[];
-
-  // Financial Impact (using THEIR numbers)
-  financialImpact: {
-    totalOpportunityCost: number;
-    calculations: FinancialCalculation[];
-    bottomLine: string;
+  // SECTION 4: What Not to Fix Yet
+  whatNotToFixYet: {
+    deprioritizedItem: string;    // Their tradeoff-2 answer
+    otherIssues: string[];        // Real but secondary issues from their answers
+    reasoning: string;            // "Addressing these before X would..."
   };
 
-  // What EP Can Build For You
-  epImplementations: EPImplementation[];
-
-  // DIY Action Plan
-  actionPlan: {
-    thisWeek: ActionItem[];
-    thisMonth: ActionItem[];
+  // SECTION 5: What a Good Fix Looks Like
+  goodFixLooksLike: {
+    successState: string;         // Conceptual end state (NOT technical)
+    youWillKnowBecause: string;   // Observable change
+    notPrescriptive: string;      // "This describes fixed, not how to fix"
   };
 
-  // Three Paths Forward
-  nextSteps: {
-    diy: {
-      title: string;
+  // SECTION 6: Two Paths Forward
+  twoPathsForward: {
+    diyPath: {
       description: string;
-      forYouIf: string;
-      epRole: string;
+      requires: string;
+      realistic: string;
     };
-    jumpstart: {
-      title: string;
-      description: string;
-      forYouIf: string;
-      investment: string;
-    };
-    partnership: {
-      title: string;
-      description: string;
-      forYouIf: string;
-      investment: string;
-    };
+    epSystemPath: {
+      systemName: string;         // One of the 4 allowed lanes
+      whatItDoes: string;
+      outcome: string;
+    } | null;                     // null if no lane fits
+    noLaneFits?: string;          // "This issue does not fit a fixed system lane"
   };
 
-  // For backwards compatibility with old report page
-  coreDiagnosis?: {
-    governingThought: string;
-    thesis: string;
-    evidenceChain: { quote: string; interpretation: string }[];
-  };
-  rootCauseAnalysis?: {
-    surfaceSymptom: string;
-    intermediateIssue: string;
-    rootCause: string;
-    explanation: string;
-    supportingEvidence: string[];
+  // SECTION 7: What This Diagnostic Does Not Do
+  doesNotDo: string[];            // 4-5 explicit disclaimers
+
+  // SECTION 8: Finality Statement
+  finalityStatement: {
+    statement: string;            // "You have what you need. No meeting required."
+    noUpsell: string;
   };
 }
 
 // ============================================================================
-// QUESTION LABELS
+// SYSTEM PROMPT
 // ============================================================================
 
-const questionLabels: Record<string, string> = {
-  // Profile
-  'profile-1': 'Annual Revenue',
-  'profile-2': 'Employee Count',
-  'profile-3': 'Industry',
-  'profile-4': '12-Month Revenue Goal',
-  'profile-5': 'Owner Hours Per Week',
-  'profile-6': 'Owner Hourly Value',
-  // Sales
-  'sales-1': 'Customer Acquisition Channels',
-  'sales-2': 'Average Deal Size',
-  'sales-3': 'Close Rate',
-  'sales-4': 'Sales Cycle Length',
-  'sales-5': 'Repeat vs New Revenue',
-  'sales-6': 'Biggest Revenue Constraint',
-  // Tech
-  'tech-1': 'Current Tools',
-  'tech-2': 'Tools That Work Well',
-  'tech-3': 'Tools That Frustrate',
-  'tech-4': 'System Integration Level',
-  'tech-5': 'Monthly Software Spend',
-  // Control
-  'control-1': 'What Breaks If Owner Away',
-  'control-2': 'Documentation Level',
-  'control-3': 'Recovery If Top Person Quits',
-  'control-4': 'Owner Approval Requirement',
-  'control-5': 'Single-Person Bottlenecks',
-  // Clarity
-  'clarity-1': 'Revenue Awareness',
-  'clarity-2': 'Project Tracking Method',
-  'clarity-3': 'Customer Inquiry Response Time',
-  'clarity-4': 'Where Data Lives',
-  'clarity-5': 'Blindsided By Problems',
-  // Leverage
-  'leverage-1': 'Time On Low-Value Tasks',
-  'leverage-2': 'Most Repetitive Process',
-  'leverage-3': 'Reactive vs Proactive',
-  'leverage-4': 'What Clone Would Do',
-  'leverage-5': 'What Would You Do With 10 Extra Hours',
-  // Friction
-  'friction-1': 'Biggest Daily Frustration',
-  'friction-2': 'Double Data Entry',
-  'friction-3': 'Onboarding Time',
-  'friction-4': 'Top Blockers',
-  'friction-5': 'Time Hunting For Info',
-  // Change
-  'change-1': 'Last Successful Implementation',
-  'change-2': 'What Happened Last Time',
-  'change-3': 'Team Attitude To Change',
-  'change-4': 'Who Owns Implementation',
-  'change-5': 'Biggest Barrier To Improvement',
-  'change-6': 'Speed To Act',
-  // Vision
-  'vision-1': 'What Would Make This Worth It',
-  'vision-2': 'Ideal Week',
-  'vision-3': 'One Thing To Fix',
-  'vision-4': 'What Already Tried',
-  'vision-5': 'Work Preference',
-};
+const SYSTEM_PROMPT = `You ANALYZE what the owner's answers IMPLY when combined.
+You do not prioritize or override their Section 7 choice. You reveal patterns they cannot see.
 
-// ============================================================================
-// HELPER: Format responses for prompt
-// ============================================================================
+## YOUR ROLE
+The primary constraint was selected by the owner. Your job is to ANALYZE what their answers mean together—not just quote them back.
 
-function formatResponsesForPrompt(responses: Record<string, string | string[] | number>): string {
-  const formatted: string[] = [];
-  for (const [key, value] of Object.entries(responses)) {
-    const label = questionLabels[key] || key;
-    let displayValue: string;
-    if (Array.isArray(value)) {
-      displayValue = value.join(', ');
-    } else if (typeof value === 'number') {
-      displayValue = `${value}/5`;
-    } else {
-      displayValue = String(value);
+If your output reads like a mirror of their words, you FAILED.
+If your output reveals patterns they couldn't see, you SUCCEEDED.
+
+## YOUR ANALYSIS TOOLKIT (USE ALL FOUR)
+
+1. PATTERN AMPLIFICATION
+   When the same entity (email, spreadsheet, owner, etc.) appears in multiple answers:
+   - Name it explicitly: "X appears in N of your answers"
+   - Explain significance: "This is not incidental—it is structural"
+   - Connect to constraint: "Every friction point runs through X"
+
+2. CONTRADICTION EXPOSURE
+   When two statements logically conflict:
+   - Name both: "You stated A but also B"
+   - State the tension: "These cannot both be true"
+   - Do NOT resolve it for them. Surface it.
+
+3. QUANTIFICATION
+   Use their stated numbers to make abstract concrete:
+   - "At N hours/week, this is Y hours/year"
+   - "At Z incidents/month, that's W/year"
+   - Make the invisible cost visible
+
+4. SECOND-ORDER EFFECTS
+   After fixing the primary constraint, what gets exposed?
+   - "If X is fixed, Y will surface"
+   - "Solving this creates a new question: Z"
+   - Help them see the next constraint before it arrives
+
+## CRITICAL RULES (NON-NEGOTIABLE)
+
+1. OWNER'S SECTION 7 ANSWER IS THE CONSTRAINT
+   They chose this. You analyze it, never override it.
+
+2. SYNTHESIS, NOT PARAPHRASE
+   Wrong: "You said follow-up is an issue" (just quoting)
+   Right: "Follow-up appears in 4 answers as where work dies. Email is the graveyard." (synthesis)
+
+3. QUOTE THEN SYNTHESIZE
+   Use quotation marks for their words. Then explain what the PATTERN means.
+
+4. NO SOFT LANGUAGE
+   Wrong: "You might want to consider..."
+   Wrong: "It appears that..."
+   Wrong: "Based on our analysis..."
+   Right: "This is blocking revenue conversion."
+   Right: "Your answers reveal..."
+   Right: "This pattern shows..."
+
+5. TWO PATHS ONLY
+   - DIY (what it takes to fix yourself)
+   - EP System Lane (ONE of the 4 below)
+   - If no lane fits: "This issue does not fit a fixed system lane."
+   - NEVER combine lanes or invent new ones.
+
+6. FINALITY
+   End with: "You have what you need to act. No meeting required unless you want EP to build the system for you."
+
+## EP SYSTEM LANES (ONLY THESE 4)
+- Intake Normalization System: Fixes how work enters, gets structured, and gets owned.
+- Follow-Up Enforcement System: Prevents revenue and work from going dark.
+- Visibility & Control System: Gives owners real-time awareness without meetings.
+- Human Dependency Reduction System: Removes single points of failure and manual re-entry.
+
+If the constraint maps to "Decision Redundancy" or doesn't clearly fit, state: "This issue does not fit a fixed system lane."
+
+## OUTPUT REQUIREMENTS BY SECTION
+
+Section 2 (Why This Is the Priority):
+- MUST include at least one pattern amplification
+- MUST surface contradictions if detected in the analysis
+- Frame as "your answers reveal" not "you said"
+
+Section 3 (Cost of Inaction):
+- MUST include quantified costs (use the numbers provided)
+- MUST show annual impact where possible
+- Frame as compounding: "every week this continues..."
+
+Section 5 (What a Good Fix Looks Like):
+- MUST include second-order effects
+- Frame as "once fixed, you will face..."
+- Be specific to their situation
+
+## OUTPUT FORMAT
+Return ONLY valid JSON with these EXACT field names:
+
+{
+  "primaryBottleneck": {
+    "constraint": "Category label",
+    "ownerStatement": "Their exact words from Section 7",
+    "inPlainTerms": "One synthesized sentence about what this means"
+  },
+  "whyThisIsPriority": {
+    "ruleExplanation": "Pattern analysis showing WHY this is structural",
+    "supportingEvidence": ["Quote 1", "Quote 2", "Quote 3"],
+    "notOpinion": "This is your stated priority validated by pattern analysis"
+  },
+  "costOfInaction": {
+    "ifIgnored": "What continues to happen with QUANTIFIED annual impact",
+    "timeframeWarning": "Every week this continues... with specific numbers",
+    "revenueLink": "Direct revenue connection with calculations"
+  },
+  "whatNotToFixYet": {
+    "deprioritizedItem": "Their tradeoff-2 answer",
+    "otherIssues": ["Other issues from their answers"],
+    "reasoning": "Why fixing these first would be premature"
+  },
+  "goodFixLooksLike": {
+    "successState": "What fixed looks like conceptually",
+    "youWillKnowBecause": "Observable change",
+    "notPrescriptive": "Includes second-order effects that will surface"
+  },
+  "twoPathsForward": {
+    "diyPath": {
+      "description": "What DIY requires",
+      "requires": "Time/resources needed",
+      "realistic": "Honest assessment"
+    },
+    "epSystemPath": {
+      "systemName": "Exact EP lane name",
+      "whatItDoes": "What the system does",
+      "outcome": "What outcome it produces"
     }
-    formatted.push(`[${label}]: "${displayValue}"`);
+  },
+  "doesNotDo": ["List of 4-5 disclaimers"],
+  "finalityStatement": {
+    "statement": "Finality message",
+    "noUpsell": "No meeting required message"
   }
-  return formatted.join('\n');
+}
+
+Use these EXACT field names. Do not rename them.
+No markdown formatting - pure JSON object.`;
+
+// ============================================================================
+// USER PROMPT BUILDER
+// ============================================================================
+
+function buildUserPrompt(
+  companyName: string,
+  contactName: string,
+  constraintResult: ConstraintResult,
+  responses: Record<string, string | string[] | number>
+): string {
+  // Get the EP system lane for this category
+  const epLane = getEPSystemLane(constraintResult.primaryConstraint.category);
+  const { patternAnalysis } = constraintResult;
+
+  // Format all responses for context
+  const formattedResponses = Object.entries(responses)
+    .filter(([key]) => !key.startsWith('profile-')) // Exclude hidden profile
+    .map(([key, value]) => {
+      const label = QUESTION_LABELS[key] || key;
+      const answer = typeof value === 'string' ? value : JSON.stringify(value);
+      return `${label}: "${answer}"`;
+    })
+    .join('\n');
+
+  // Format pattern analysis for the AI
+  const repeatedEntitiesSection = patternAnalysis.repeatedEntities.length > 0
+    ? patternAnalysis.repeatedEntities.map(e =>
+        `- "${e.entity}" appears ${e.occurrences.length} times in: ${e.occurrences.map(o => QUESTION_LABELS[o.questionId] || o.questionId).join(', ')}\n  Significance: ${e.significance}`
+      ).join('\n')
+    : 'None detected with 2+ occurrences';
+
+  const contradictionsSection = patternAnalysis.contradictions.length > 0
+    ? patternAnalysis.contradictions.map(c =>
+        `- TENSION: "${c.statement1.text.slice(0, 80)}..." (${QUESTION_LABELS[c.statement1.questionId] || c.statement1.questionId}) vs "${c.statement2.text.slice(0, 80)}..." (${QUESTION_LABELS[c.statement2.questionId] || c.statement2.questionId})\n  Conflict: ${c.tension}`
+      ).join('\n')
+    : 'None detected';
+
+  const quantifiableSection = patternAnalysis.quantifiableData.length > 0
+    ? patternAnalysis.quantifiableData.map(q =>
+        `- "${q.rawText}" (${QUESTION_LABELS[q.questionId] || q.questionId}) → ${q.annualized || 'calculate impact'}`
+      ).join('\n')
+    : 'No explicit numbers found - use qualitative framing';
+
+  const secondOrderSection = patternAnalysis.secondOrderEffects.map(e =>
+    `- If "${e.ifFixed}" → then "${e.thenExposed}"`
+  ).join('\n');
+
+  return `## DIAGNOSTIC INPUT
+
+**Company:** ${companyName}
+**Contact:** ${contactName}
+
+## OWNER-DEFINED PRIMARY CONSTRAINT (FROM SECTION 7)
+Category: ${constraintResult.primaryConstraint.label}
+Owner's Exact Words: "${constraintResult.primaryConstraint.ownerStatement}"
+
+## OWNER-DEFINED DEPRIORITIZED ITEM (FROM SECTION 7)
+"${constraintResult.deprioritized.statement}"
+
+## ═══════════════════════════════════════════════════════════════════════════
+## PRE-PROCESSED PATTERN ANALYSIS
+## USE THIS DATA TO SYNTHESIZE INSIGHTS - DO NOT JUST PARAPHRASE ANSWERS
+## ═══════════════════════════════════════════════════════════════════════════
+
+### REPEATED ENTITIES (Structural Dependencies)
+These entities appear across multiple answers - this is structural, not incidental.
+${repeatedEntitiesSection}
+
+### DETECTED CONTRADICTIONS
+Statements that logically conflict - surface these, do not resolve them.
+${contradictionsSection}
+
+### QUANTIFIABLE DATA POINTS
+Use these numbers for annual impact calculations.
+${quantifiableSection}
+
+### SECOND-ORDER EFFECTS TO SURFACE
+What fixing the constraint will expose next.
+${secondOrderSection}
+
+## ═══════════════════════════════════════════════════════════════════════════
+
+## SUPPORTING EVIDENCE (Direct quotes from earlier sections)
+${constraintResult.primaryConstraint.supportingEvidence.map(e => `• "${e}"`).join('\n')}
+
+## ALL DIAGNOSTIC RESPONSES
+${formattedResponses}
+
+## EP SYSTEM LANE FOR THIS CATEGORY
+${epLane ? `${epLane.name}: ${epLane.description}` : 'No fixed system lane fits this category.'}
+
+---
+
+Generate the 8-section Revenue Friction Diagnostic output as JSON.
+
+CRITICAL INSTRUCTIONS:
+1. The owner's Section 7 answer IS the primary constraint - analyze it, don't override it
+2. USE THE PATTERN ANALYSIS ABOVE - this is your synthesis material
+3. Section 2 MUST include pattern amplification and any contradictions
+4. Section 3 MUST include quantified annual costs where numbers exist
+5. Section 5 MUST include second-order effects
+6. If the output just quotes their words back, you have FAILED
+7. No soft language - be direct
+8. End with finality`;
 }
 
 // ============================================================================
 // MAIN GENERATION FUNCTION
 // ============================================================================
 
-export async function generatePremiumInsights(
+export async function generateRevenueFrictionDiagnostic(
   companyName: string,
   contactName: string,
-  responses: Record<string, string | string[] | number>,
-  scores: {
-    total: number;
-    percentage: number;
-    band: string;
-    bandLabel: string;
-    dimensions: { dimension: string; label: string; score: number; maxScore: number; percentage: number; interpretation: string }[];
-  },
-  assessmentId: string
-): Promise<PremiumReportInsights> {
-
-  // Extract business profile
-  const profile = extractBusinessProfile(responses);
-  const ownerHourlyRate = parseHourlyRate(profile.ownerHourlyRate);
-  const employeeCount = parseEmployeeCount(profile.employeeCount);
-  const annualRevenue = parseAnnualRevenue(profile.annualRevenue);
-
-  const formattedResponses = formatResponsesForPrompt(responses);
-
-  // Pre-format dimension scores
-  const dimensionData = scores.dimensions.map(d =>
-    `${d.label}: ${d.score}/${d.maxScore} (${d.percentage}%) - ${d.interpretation.toUpperCase()}`
-  ).join('\n');
-
-  const systemPrompt = `You are a senior business diagnostician for Ena Pragma (EP), a consulting firm that doesn't just diagnose problems - we BUILD and IMPLEMENT solutions.
-
-## YOUR MISSION
-
-Create an "aha moment" for this business owner - the ONE insight that connects multiple symptoms to a root cause they haven't seen. This insight is worth $1,500 because it changes how they think about their business.
-
-## CRITICAL RULES - NON-NEGOTIABLE
-
-### Rule 1: Use ONLY Their Data
-You have access to THEIR specific numbers:
-- Owner hourly value: $${ownerHourlyRate}/hour (from their answer)
-- Employee count: ${employeeCount} people (from their answer)
-- Annual revenue: ${annualRevenue > 0 ? '$' + annualRevenue.toLocaleString() : 'Not provided'}
-- Industry: ${profile.industry}
-
-EVERY financial calculation MUST reference their data. Format: "Based on your answer that you work ${profile.ownerHoursPerWeek}, at your stated rate of ${profile.ownerHourlyRate}..."
-
-If they didn't provide a number, say "Based on industry averages for ${profile.industry}..." and mark it as "industry-average" or "conservative-estimate".
-
-### Rule 2: Quote Them
-Quote their EXACT words at least 10 times. Put quotes in quotation marks. This proves you read their answers.
-
-### Rule 3: The AHA Moment
-Find the ONE pattern they couldn't see. Connect 3+ of their answers to reveal a root cause. Example:
-"You said [quote 1], and separately mentioned [quote 2], and your biggest frustration is [quote 3]. These aren't three problems - they're all symptoms of ONE root cause: [insight]."
-
-### Rule 4: EP Builds, Not Just Advises
-EP is a ONE STOP SHOP. We diagnose problems AND we build solutions:
-- We implement systems (CRM, project management, documentation)
-- We build automations (Zapier, Make, custom integrations)
-- We create SOPs and training
-- We integrate AI tools
-- We provide ongoing operational partnership
-
-Position EVERY recommendation with: "You could do this yourself, OR EP can build this for you in [timeframe]."
-
-### Rule 5: No Fluff
-- No consulting buzzwords
-- No vague recommendations ("improve communication")
-- No placeholder text
-- Every claim backed by their data or marked as estimate
-- Financial calculations show the math
-
-## OUTPUT REQUIREMENTS
-
-The report must feel like EP understands their specific business - not a template. Reference their industry (${profile.industry}), their goal ("${profile.revenueGoal}"), and their biggest constraint ("${profile.revenueConstraint}").`;
-
-  const userPrompt = `BUSINESS DIAGNOSTIC: ${companyName}
-Contact: ${contactName}
-
-=== BUSINESS PROFILE (Use these exact numbers) ===
-Annual Revenue: ${profile.annualRevenue}
-Employees: ${profile.employeeCount}
-Industry: ${profile.industry}
-Owner Hours/Week: ${profile.ownerHoursPerWeek}
-Owner Hourly Value: ${profile.ownerHourlyRate} ($${ownerHourlyRate}/hr)
-Revenue Goal: ${profile.revenueGoal}
-Biggest Constraint: ${profile.revenueConstraint}
-Work Preference: ${profile.workPreference}
-Current Tools: ${profile.currentTools.join(', ') || 'Not specified'}
-
-=== SCORES (Use these exactly) ===
-Overall: ${scores.percentage}% - ${scores.bandLabel}
-
-${dimensionData}
-
-=== THEIR RESPONSES (Quote these) ===
-${formattedResponses}
-
----
-
-Generate a JSON report with this structure:
-
-{
-  "generatedAt": "${new Date().toISOString()}",
-  "assessmentId": "${assessmentId}",
-  "companyName": "${companyName}",
-  "contactName": "${contactName}",
-
-  "businessProfile": {
-    "revenue": "${profile.annualRevenue}",
-    "employees": "${profile.employeeCount}",
-    "industry": "${profile.industry}",
-    "ownerHourlyValue": "${profile.ownerHourlyRate}",
-    "revenueGoal": "${profile.revenueGoal}",
-    "biggestConstraint": "${profile.revenueConstraint}"
-  },
-
-  "ahaMoment": {
-    "headline": "The ONE insight that explains multiple problems (one powerful sentence)",
-    "explanation": "Why this matters and how it connects their symptoms (2-3 sentences)",
-    "evidence": ["Quote 1 from their answers", "Quote 2 that connects", "Quote 3 that proves it"],
-    "implication": "If they ignore this, in 12 months... (specific consequence)"
-  },
-
-  "executiveSummary": {
-    "verdict": "One sentence assessment of their business state",
-    "readinessScore": ${scores.percentage},
-    "readinessLevel": "${scores.bandLabel}",
-    "inOneYear": "If nothing changes, specifically what happens based on their answers",
-    "ifYouAct": "If they address the root cause, what becomes possible"
-  },
-
-  "rootCause": {
-    "surface": "What they THINK the problem is (often from friction-1 or vision-3)",
-    "underlying": "What's actually causing that",
-    "root": "The root cause - fix this and multiple symptoms improve",
-    "howWeKnow": ["Quote 1 that reveals this", "Quote 2", "Quote 3"]
-  },
-
-  "dimensionInsights": [
-    {
-      "dimension": "control",
-      "label": "Control",
-      "score": ${scores.dimensions.find(d => d.dimension === 'control')?.score || 0},
-      "maxScore": ${scores.dimensions.find(d => d.dimension === 'control')?.maxScore || 20},
-      "percentage": ${scores.dimensions.find(d => d.dimension === 'control')?.percentage || 0},
-      "interpretation": "${scores.dimensions.find(d => d.dimension === 'control')?.interpretation || 'needs-work'}",
-      "diagnosis": "What this score means for THEIR specific business",
-      "yourQuote": "Quote their answer that most reveals this issue",
-      "whatThisCosts": "In YOUR terms: X hours/week at $${ownerHourlyRate}/hr = $Y/year",
-      "quickFix": "ONE specific action they could take this week"
-    }
-    // ... repeat for clarity, leverage, friction, change-readiness (5 total)
-  ],
-
-  "financialImpact": {
-    "totalOpportunityCost": (sum of all calculations),
-    "calculations": [
-      {
-        "item": "Specific cost item from THEIR answers",
-        "yourData": "You said '[their exact quote]'",
-        "calculation": "X hrs/week × $${ownerHourlyRate}/hr × 48 weeks",
-        "annualImpact": (number),
-        "basis": "from-your-answers"
-      }
-    ],
-    "bottomLine": "Summary: Based on YOUR numbers, you're leaving approximately $X on the table annually. Here's why this matters for your goal of '${profile.revenueGoal}'..."
-  },
-
-  "epImplementations": [
-    {
-      "title": "What EP Would Build",
-      "whatEPBuilds": "Specific system, automation, or process EP would create",
-      "yourProblem": "You said '[quote their specific issue]'",
-      "outcome": "After EP builds this, you'll have [specific result]",
-      "timeframe": "2-4 weeks",
-      "investmentRange": "$X,XXX - $X,XXX"
-    }
-  ],
-
-  "actionPlan": {
-    "thisWeek": [
-      {
-        "action": "Specific action",
-        "why": "Because you said '[their quote]'",
-        "steps": ["Step 1", "Step 2", "Step 3"],
-        "timeRequired": "X hours",
-        "cost": "$0 or specific cost",
-        "result": "What changes when done",
-        "canEPDoThis": true/false
-      }
-    ],
-    "thisMonth": [...]
-  },
-
-  "nextSteps": {
-    "diy": {
-      "title": "Self-Implementation",
-      "description": "Take this report and implement the action plan yourself",
-      "forYouIf": "You have ${profile.ownerHoursPerWeek === '70+ hours' ? 'limited' : 'some'} time to dedicate AND someone to own implementation",
-      "epRole": "We're here if you get stuck - hourly consulting available"
-    },
-    "jumpstart": {
-      "title": "EP Jumpstart",
-      "description": "EP builds the foundation: [list 2-3 specific things from epImplementations]",
-      "forYouIf": "You want results fast and would rather invest money than time",
-      "investment": "$5,000 - $15,000 depending on scope"
-    },
-    "partnership": {
-      "title": "Ongoing Partnership",
-      "description": "EP as your fractional operations team - we handle implementation, optimization, and new initiatives",
-      "forYouIf": "You want operational excellence without hiring a full-time ops person",
-      "investment": "Starting at $2,500/month"
-    }
-  }
-}
-
-REMEMBER:
-1. Use THEIR exact numbers - Owner rate: $${ownerHourlyRate}/hr, Revenue: ${annualRevenue > 0 ? '$' + annualRevenue.toLocaleString() : 'not provided'}
-2. Quote them at least 10 times
-3. Show math for every financial calculation
-4. Position EP as builder/implementer, not just advisor
-5. The AHA moment must connect 3+ of their answers to ONE root cause
-6. Every recommendation includes "you can DIY or EP can build this"`;
+  constraintResult: ConstraintResult,
+  responses: Record<string, string | string[] | number>
+): Promise<RevenueFrictionDiagnostic> {
+  const userPrompt = buildUserPrompt(companyName, contactName, constraintResult, responses);
+  const openai = getOpenAIClient();
 
   try {
-    const openai = getOpenAIClient();
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
+      temperature: 0.3, // Lower temperature for consistency
+      max_tokens: 4000,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
       ],
-      temperature: 0.4, // Lower for consistency
-      max_tokens: 6000,
-      response_format: { type: 'json_object' }
+      response_format: { type: 'json_object' },
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = completion.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No response from OpenAI');
     }
 
-    const insights = JSON.parse(content) as PremiumReportInsights;
+    const parsed = JSON.parse(content);
 
-    // FORCE correct scores (AI sometimes ignores)
-    insights.executiveSummary.readinessScore = scores.percentage;
-    insights.executiveSummary.readinessLevel = scores.bandLabel;
-
-    insights.dimensionInsights = insights.dimensionInsights.map((dim) => {
-      const matchingScore = scores.dimensions.find(s => s.dimension === dim.dimension);
-      if (matchingScore) {
-        return {
-          ...dim,
-          score: matchingScore.score,
-          maxScore: matchingScore.maxScore,
-          percentage: matchingScore.percentage,
-          interpretation: matchingScore.interpretation as 'critical' | 'needs-work' | 'stable' | 'strong',
-        };
-      }
-      return dim;
-    });
-
-    // Add backwards compatibility fields
-    insights.coreDiagnosis = {
-      governingThought: insights.ahaMoment.headline,
-      thesis: insights.ahaMoment.explanation,
-      evidenceChain: insights.ahaMoment.evidence.map(e => ({ quote: e, interpretation: '' }))
+    // Ensure the result has the correct structure
+    return {
+      version: 'v2_revenue_friction',
+      generatedAt: new Date().toISOString(),
+      companyName,
+      contactName,
+      primaryBottleneck: parsed.primaryBottleneck || {
+        constraint: constraintResult.primaryConstraint.label,
+        ownerStatement: constraintResult.primaryConstraint.ownerStatement,
+        inPlainTerms: 'This is the constraint preventing effort from converting into revenue.',
+      },
+      whyThisIsPriority: parsed.whyThisIsPriority || {
+        ruleExplanation: 'You identified this as your primary constraint in Section 7.',
+        supportingEvidence: constraintResult.primaryConstraint.supportingEvidence,
+        notOpinion: 'This is your stated priority, not our assessment.',
+      },
+      costOfInaction: parsed.costOfInaction || {
+        ifIgnored: 'This constraint will continue to block revenue conversion.',
+        timeframeWarning: 'Every week this continues, effort fails to convert to revenue.',
+        revenueLink: 'This is the constraint preventing effort from converting into revenue.',
+      },
+      whatNotToFixYet: parsed.whatNotToFixYet || {
+        deprioritizedItem: constraintResult.deprioritized.statement,
+        otherIssues: [],
+        reasoning: 'Addressing these before fixing the primary constraint would be premature.',
+      },
+      goodFixLooksLike: parsed.goodFixLooksLike || {
+        successState: 'The constraint no longer blocks revenue conversion.',
+        youWillKnowBecause: 'Effort converts to revenue without this friction.',
+        notPrescriptive: 'This describes what "fixed" looks like, not how to fix it.',
+      },
+      twoPathsForward: parsed.twoPathsForward || buildDefaultTwoPaths(constraintResult.primaryConstraint.category),
+      doesNotDo: parsed.doesNotDo || [
+        'This diagnostic does not provide a custom roadmap.',
+        'This diagnostic does not require a meeting to understand.',
+        'This diagnostic does not offer multiple options to choose from.',
+        'This diagnostic does not predict timelines.',
+        'This diagnostic does not guarantee outcomes.',
+      ],
+      finalityStatement: parsed.finalityStatement || {
+        statement: 'You have what you need to act. No meeting required unless you want EP to build the system for you.',
+        noUpsell: 'This diagnostic is complete. There is nothing more to discuss unless you want EP to implement the fix.',
+      },
     };
-    insights.rootCauseAnalysis = {
-      surfaceSymptom: insights.rootCause.surface,
-      intermediateIssue: insights.rootCause.underlying,
-      rootCause: insights.rootCause.root,
-      explanation: insights.ahaMoment.explanation,
-      supportingEvidence: insights.rootCause.howWeKnow
-    };
-
-    return insights;
   } catch (error) {
-    console.error('Premium insights generation failed:', error);
-    throw error;
+    console.error('Error generating diagnostic:', error);
+    return generateFallbackDiagnostic(companyName, contactName, constraintResult);
   }
 }
 
@@ -541,148 +438,142 @@ REMEMBER:
 // FALLBACK GENERATOR
 // ============================================================================
 
-export function generateFallbackInsights(
+function buildDefaultTwoPaths(category: ConstraintCategory): RevenueFrictionDiagnostic['twoPathsForward'] {
+  const epLane = getEPSystemLane(category);
+
+  if (epLane) {
+    return {
+      diyPath: {
+        description: 'Fix this yourself by building or configuring systems to address the constraint.',
+        requires: 'Time, technical knowledge, and ongoing maintenance.',
+        realistic: 'Possible if you have capacity and expertise.',
+      },
+      epSystemPath: {
+        systemName: epLane.name,
+        whatItDoes: epLane.description,
+        outcome: 'The constraint is eliminated through a purpose-built system.',
+      },
+    };
+  } else {
+    return {
+      diyPath: {
+        description: 'Fix this yourself by building or configuring systems to address the constraint.',
+        requires: 'Time, technical knowledge, and ongoing maintenance.',
+        realistic: 'Possible if you have capacity and expertise.',
+      },
+      epSystemPath: null,
+      noLaneFits: 'This issue does not fit a fixed system lane. EP does not offer a pre-built solution for this specific constraint.',
+    };
+  }
+}
+
+function generateFallbackDiagnostic(
   companyName: string,
   contactName: string,
-  responses: Record<string, string | string[] | number>,
-  scores: {
-    total: number;
-    percentage: number;
-    band: string;
-    bandLabel: string;
-    dimensions: { dimension: string; label: string; score: number; maxScore: number; percentage: number; interpretation: string }[];
-  },
-  assessmentId: string
-): PremiumReportInsights {
-  const profile = extractBusinessProfile(responses);
-  const weakest = [...scores.dimensions].sort((a, b) => a.percentage - b.percentage)[0];
-
+  constraintResult: ConstraintResult
+): RevenueFrictionDiagnostic {
   return {
+    version: 'v2_revenue_friction',
     generatedAt: new Date().toISOString(),
-    assessmentId,
     companyName,
     contactName,
-    businessProfile: {
-      revenue: profile.annualRevenue,
-      employees: profile.employeeCount,
-      industry: profile.industry,
-      ownerHourlyValue: profile.ownerHourlyRate,
-      revenueGoal: profile.revenueGoal,
-      biggestConstraint: profile.revenueConstraint,
+
+    primaryBottleneck: {
+      constraint: constraintResult.primaryConstraint.label,
+      ownerStatement: constraintResult.primaryConstraint.ownerStatement,
+      inPlainTerms: `${constraintResult.primaryConstraint.label} is preventing effort from converting into revenue.`,
     },
-    ahaMoment: {
-      headline: `Your ${weakest.label.toLowerCase()} is creating a ceiling on growth`,
-      explanation: `Based on your assessment, ${weakest.label} scored ${weakest.percentage}% - this is likely the root constraint limiting your progress toward "${profile.revenueGoal}".`,
-      evidence: ['Assessment data analyzed'],
-      implication: `Without addressing ${weakest.label.toLowerCase()}, reaching your goal will be significantly harder.`,
+
+    whyThisIsPriority: {
+      ruleExplanation: `You identified "${constraintResult.primaryConstraint.ownerStatement}" as the single issue that would most reduce daily friction or lost revenue if fixed in the next 30 days.`,
+      supportingEvidence: constraintResult.primaryConstraint.supportingEvidence,
+      notOpinion: 'This is your stated priority, not our assessment. You chose this.',
     },
-    executiveSummary: {
-      verdict: `${companyName} has operational gaps that need addressing for sustainable growth.`,
-      readinessScore: scores.percentage,
-      readinessLevel: scores.bandLabel,
-      inOneYear: `If nothing changes, ${weakest.label.toLowerCase()} issues will continue constraining growth.`,
-      ifYouAct: `Addressing ${weakest.label.toLowerCase()} could unlock significant capacity.`
+
+    costOfInaction: {
+      ifIgnored: `If this constraint remains unaddressed, the friction and revenue leakage will continue. You described this as your primary blocker.`,
+      timeframeWarning: 'Every week this continues, the same friction repeats and the same revenue opportunities slip.',
+      revenueLink: 'This is the constraint preventing effort from converting into revenue.',
     },
-    rootCause: {
-      surface: profile.revenueConstraint || 'Operational constraints',
-      underlying: `Low ${weakest.label} score indicates systemic issues`,
-      root: 'Foundation work needed in core operations',
-      howWeKnow: ['Assessment scores indicate this pattern']
+
+    whatNotToFixYet: {
+      deprioritizedItem: constraintResult.deprioritized.statement,
+      otherIssues: [],
+      reasoning: `You explicitly chose to deprioritize "${constraintResult.deprioritized.statement}" for six months. This is correct. Addressing it before fixing the primary constraint would dilute focus.`,
     },
-    dimensionInsights: scores.dimensions.map(dim => ({
-      dimension: dim.dimension,
-      label: dim.label,
-      score: dim.score,
-      maxScore: dim.maxScore,
-      percentage: dim.percentage,
-      interpretation: dim.interpretation as 'critical' | 'needs-work' | 'stable' | 'strong',
-      diagnosis: `${dim.label} at ${dim.percentage}% indicates ${dim.interpretation} performance.`,
-      yourQuote: 'See detailed responses',
-      whatThisCosts: 'Analysis pending',
-      quickFix: 'Review responses and identify specific improvements.'
-    })),
-    financialImpact: {
-      totalOpportunityCost: 0,
-      calculations: [],
-      bottomLine: 'Full financial analysis requires AI processing. Schedule a strategy session for detailed impact analysis.'
+
+    goodFixLooksLike: {
+      successState: `${constraintResult.primaryConstraint.label} no longer blocks operations. Work flows without this friction.`,
+      youWillKnowBecause: 'The specific issue you described no longer occurs. Effort converts to revenue without this bottleneck.',
+      notPrescriptive: 'This describes what "fixed" looks like, not how to fix it. The method is your choice.',
     },
-    epImplementations: [{
-      title: 'Operations Foundation',
-      whatEPBuilds: 'Core systems and documentation',
-      yourProblem: profile.revenueConstraint || 'Operational efficiency',
-      outcome: 'Structured foundation for scale',
-      timeframe: '4-6 weeks',
-      investmentRange: 'Custom quote needed'
-    }],
-    actionPlan: {
-      thisWeek: [{
-        action: 'Review this assessment with your team',
-        why: 'Alignment on current state enables focused improvement',
-        steps: ['Share assessment', 'Discuss scores', 'Identify quick wins'],
-        timeRequired: '1 hour',
-        cost: '$0',
-        result: 'Team alignment on priorities',
-        canEPDoThis: true
-      }],
-      thisMonth: []
+
+    twoPathsForward: buildDefaultTwoPaths(constraintResult.primaryConstraint.category),
+
+    doesNotDo: [
+      'This diagnostic does not provide a custom roadmap.',
+      'This diagnostic does not require a meeting to understand.',
+      'This diagnostic does not offer multiple options to choose from.',
+      'This diagnostic does not predict timelines.',
+      'This diagnostic does not guarantee outcomes.',
+    ],
+
+    finalityStatement: {
+      statement: 'You have what you need to act. No meeting required unless you want EP to build the system for you.',
+      noUpsell: 'This diagnostic is complete. There is nothing more to discuss unless you want EP to implement the fix.',
     },
-    nextSteps: {
-      diy: {
-        title: 'Self-Implementation',
-        description: 'Use this assessment to guide your own improvements.',
-        forYouIf: 'You have time and internal capacity',
-        epRole: 'Hourly consulting available if needed'
-      },
-      jumpstart: {
-        title: 'EP Jumpstart',
-        description: 'EP builds the operational foundation for you.',
-        forYouIf: 'You want fast results without the learning curve',
-        investment: '$5,000 - $15,000'
-      },
-      partnership: {
-        title: 'Ongoing Partnership',
-        description: 'EP as your fractional operations team.',
-        forYouIf: 'You want ongoing operational excellence',
-        investment: 'Starting at $2,500/month'
-      }
-    },
-    // Backwards compatibility
-    coreDiagnosis: {
-      governingThought: `Your ${weakest.label.toLowerCase()} is creating a ceiling on growth`,
-      thesis: `Based on your assessment, ${weakest.label} scored ${weakest.percentage}%.`,
-      evidenceChain: [{ quote: 'Assessment data analyzed', interpretation: '' }]
-    },
-    rootCauseAnalysis: {
-      surfaceSymptom: profile.revenueConstraint || 'Operational constraints',
-      intermediateIssue: `Low ${weakest.label} score`,
-      rootCause: 'Foundation work needed',
-      explanation: 'The assessment reveals this as the priority area.',
-      supportingEvidence: ['Assessment scores indicate this pattern']
-    }
   };
 }
 
 // ============================================================================
-// MAIN EXPORT WITH FALLBACK
+// WRAPPER WITH ERROR HANDLING
 // ============================================================================
 
-export async function generateInsightsWithFallback(
+export async function generateDiagnosticWithFallback(
   companyName: string,
   contactName: string,
-  responses: Record<string, string | string[] | number>,
-  scores: {
-    total: number;
-    percentage: number;
-    band: string;
-    bandLabel: string;
-    dimensions: { dimension: string; label: string; score: number; maxScore: number; percentage: number; interpretation: string }[];
-  },
-  assessmentId: string
-): Promise<PremiumReportInsights> {
+  constraintResult: ConstraintResult,
+  responses: Record<string, string | string[] | number>
+): Promise<RevenueFrictionDiagnostic> {
   try {
-    return await generatePremiumInsights(companyName, contactName, responses, scores, assessmentId);
+    return await generateRevenueFrictionDiagnostic(
+      companyName,
+      contactName,
+      constraintResult,
+      responses
+    );
   } catch (error) {
-    console.error('AI generation failed, using fallback:', error);
-    return generateFallbackInsights(companyName, contactName, responses, scores, assessmentId);
+    console.error('Error in generateDiagnosticWithFallback:', error);
+    return generateFallbackDiagnostic(companyName, contactName, constraintResult);
   }
+}
+
+// ============================================================================
+// LEGACY TYPES (for backwards compatibility with v1 assessments)
+// ============================================================================
+
+export interface PremiumReportInsights {
+  // Legacy v1 structure - do not use for new assessments
+  generatedAt: string;
+  assessmentId: string;
+  companyName: string;
+  contactName: string;
+  executiveSummary: unknown;
+  rootCause: unknown;
+  dimensionInsights: unknown[];
+  financialImpact: unknown;
+  epImplementations: unknown[];
+  actionPlan: unknown;
+  nextSteps: unknown;
+}
+
+// Stub for legacy compatibility
+export async function generatePremiumInsights(): Promise<PremiumReportInsights | null> {
+  console.warn('generatePremiumInsights() is deprecated. Use generateRevenueFrictionDiagnostic() for v2 assessments.');
+  return null;
+}
+
+export async function generateInsightsWithFallback(): Promise<PremiumReportInsights | null> {
+  console.warn('generateInsightsWithFallback() is deprecated. Use generateDiagnosticWithFallback() for v2 assessments.');
+  return null;
 }

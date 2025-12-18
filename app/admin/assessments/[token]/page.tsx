@@ -1,5 +1,9 @@
 'use client';
 
+// app/admin/assessments/[token]/page.tsx
+// Revenue Friction Diagnostic - Admin Assessment Editor
+// December 2025 - v2 pivot with legacy support
+
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -19,12 +23,13 @@ import {
   Building2,
   BarChart3,
   Send,
-  Clock,
   RefreshCw,
   Copy,
+  Quote,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import type { PremiumReportInsights } from '@/lib/premium-insights';
+import type { RevenueFrictionDiagnostic } from '@/lib/premium-insights';
+import type { ConstraintResult, AssessmentVersion } from '@/lib/database.types';
 
 interface ManualInsight {
   id: string;
@@ -42,13 +47,28 @@ interface Assessment {
   email: string;
   company: string;
   status: string;
+  version?: AssessmentVersion;
+  // v1 legacy scores
   scores?: {
     percentage: number;
     bandLabel: string;
     dimensions: { dimension: string; label: string; percentage: number }[];
   };
-  insights?: PremiumReportInsights;
+  // v2 constraint result
+  constraint_result?: ConstraintResult;
+  // v2 diagnostic or v1 legacy insights
+  insights?: RevenueFrictionDiagnostic | Record<string, unknown>;
   manual_insights?: ManualInsight[];
+}
+
+// Type guard for v2 diagnostic
+function isV2Diagnostic(insights: unknown): insights is RevenueFrictionDiagnostic {
+  return (
+    typeof insights === 'object' &&
+    insights !== null &&
+    'version' in insights &&
+    (insights as { version: string }).version === 'v2_revenue_friction'
+  );
 }
 
 export default function AdminAssessmentEditPage({
@@ -287,14 +307,14 @@ export default function AdminAssessmentEditPage({
               </button>
               <Image
                 src={resolvedTheme === 'dark' ? '/assets/logo-white.svg' : '/assets/logo-black.svg'}
-                alt="Pragma Score Admin"
+                alt="Revenue Friction Diagnostic Admin"
                 width={100}
                 height={32}
                 className="h-8 w-auto"
                 priority
               />
               <span className="text-sm font-medium text-amber-700 dark:text-amber-400 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 rounded">
-                Edit Assessment
+                Edit Diagnostic
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -363,12 +383,12 @@ export default function AdminAssessmentEditPage({
                         : "Customer is currently filling out the assessment."}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-white/40 ml-11 mt-2">
-                      Cannot generate insights until assessment is submitted.
+                      Cannot generate diagnostic until assessment is submitted.
                     </p>
                   </div>
                 )}
 
-                {/* Step 2: Generate AI Insights */}
+                {/* Step 2: Generate Diagnostic */}
                 {(assessment.status === 'pending_review' || assessment.status === 'submitted' || assessment.status === 'report_ready' || assessment.status === 'released') && (
                   <div className={`p-4 rounded-lg border-2 ${
                     assessment.insights
@@ -386,10 +406,10 @@ export default function AdminAssessmentEditPage({
                         </div>
                         <div>
                           <h4 className="font-semibold text-gray-700 dark:text-white/80">
-                            {assessment.insights ? 'AI Insights Generated' : 'Generate AI Insights'}
+                            {assessment.insights ? 'Diagnostic Generated' : 'Generate Diagnostic'}
                           </h4>
                           <p className="text-xs text-gray-500 dark:text-white/50">
-                            {assessment.insights ? 'Report content is ready' : 'Click to analyze responses and generate report'}
+                            {assessment.insights ? 'Diagnostic report is ready' : 'Click to analyze responses and generate diagnostic'}
                           </p>
                         </div>
                       </div>
@@ -503,33 +523,60 @@ export default function AdminAssessmentEditPage({
               </div>
             </div>
 
-            {/* Score Display */}
-            {assessment.scores && (
+            {/* Score Display - v1 legacy */}
+            {assessment.version === 'v1_legacy' && assessment.scores && (
               <div className="text-center md:text-right">
+                <div className="text-xs text-gray-500 dark:text-white/50 mb-1">Legacy v1</div>
                 <div className="text-4xl font-bold text-gray-900 dark:text-white">{assessment.scores.percentage}%</div>
                 <div className="text-sm text-gray-500 dark:text-white/50">{assessment.scores.bandLabel}</div>
+              </div>
+            )}
+
+            {/* Constraint Display - v2 */}
+            {(assessment.version === 'v2_revenue_friction' || !assessment.version) && assessment.constraint_result && (
+              <div className="text-center md:text-right max-w-xs">
+                <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold uppercase tracking-wider mb-1">
+                  Primary Constraint
+                </div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  {assessment.constraint_result.primaryConstraint.label}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-white/50 italic line-clamp-2">
+                  &quot;{assessment.constraint_result.primaryConstraint.ownerStatement.slice(0, 80)}...&quot;
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* AI-Generated Summary Preview */}
-        {assessment.insights?.executiveSummary && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/30 rounded-xl p-6 mb-8">
-            <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300 uppercase tracking-wider mb-3">
-              AI-Generated Executive Summary
+        {/* v2 Diagnostic Summary Preview */}
+        {assessment.insights && isV2Diagnostic(assessment.insights) && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-xl p-6 mb-8">
+            <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              Primary Bottleneck Identified
             </h3>
-            <p className="text-gray-700 dark:text-white/80 mb-4">
-              {assessment.insights.executiveSummary.verdict}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <span className="text-amber-700 dark:text-amber-400">
-                <strong>If Nothing Changes:</strong> {assessment.insights.executiveSummary.inOneYear}
+            <div className="mb-4">
+              <span className="inline-block px-3 py-1 bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 rounded-full text-sm font-semibold mb-2">
+                {assessment.insights.primaryBottleneck.constraint}
               </span>
-              <span className="text-green-700 dark:text-green-400">
-                <strong>If You Act:</strong> {assessment.insights.executiveSummary.ifYouAct}
-              </span>
+              <p className="text-gray-700 dark:text-white/80 italic">
+                &quot;{assessment.insights.primaryBottleneck.ownerStatement}&quot;
+              </p>
             </div>
+            <p className="text-gray-600 dark:text-white/70 text-sm">
+              {assessment.insights.primaryBottleneck.inPlainTerms}
+            </p>
+            {assessment.insights.twoPathsForward?.epSystemPath && (
+              <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-700">
+                <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold uppercase">
+                  EP System Lane:
+                </span>
+                <span className="ml-2 text-sm text-gray-700 dark:text-white/80">
+                  {assessment.insights.twoPathsForward.epSystemPath.systemName}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -690,24 +737,45 @@ export default function AdminAssessmentEditPage({
         </div>
         )}
 
-        {/* View Evidence Chain */}
-        {assessment.insights?.coreDiagnosis?.evidenceChain && assessment.insights.coreDiagnosis.evidenceChain.length > 0 && (
+        {/* v2 Supporting Evidence */}
+        {assessment.insights && isV2Diagnostic(assessment.insights) && assessment.insights.whyThisIsPriority?.supportingEvidence?.length > 0 && (
           <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-              Evidence Chain (Key Quotes)
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+              <Quote className="w-5 h-5 text-amber-700" />
+              Supporting Evidence (Customer Quotes)
             </h2>
-            <div className="space-y-4">
-              {assessment.insights.coreDiagnosis.evidenceChain.map((evidence, i) => (
-                <div key={i} className="bg-gray-50 dark:bg-white/5 rounded-lg p-4">
-                  <p className="text-sm text-amber-700 dark:text-amber-400 mb-2 italic">
-                    &quot;{evidence.quote}&quot;
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-white/70">
-                    {evidence.interpretation}
+            <p className="text-sm text-gray-500 dark:text-white/50 mb-4">
+              {assessment.insights.whyThisIsPriority.notOpinion}
+            </p>
+            <div className="space-y-3">
+              {assessment.insights.whyThisIsPriority.supportingEvidence.map((quote, i) => (
+                <div key={i} className="bg-gray-50 dark:bg-white/5 rounded-lg p-4 border-l-4 border-amber-500">
+                  <p className="text-sm text-gray-700 dark:text-white/80 italic">
+                    &quot;{quote}&quot;
                   </p>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* v2 Deprioritized Item */}
+        {assessment.insights && isV2Diagnostic(assessment.insights) && assessment.insights.whatNotToFixYet?.deprioritizedItem && (
+          <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 mt-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              What Not to Fix Yet
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-white/50 mb-3">
+              Customer explicitly deprioritized this for 6 months:
+            </p>
+            <div className="bg-white dark:bg-black/20 rounded-lg p-4 border border-gray-200 dark:border-white/10">
+              <p className="text-gray-700 dark:text-white/80 italic">
+                &quot;{assessment.insights.whatNotToFixYet.deprioritizedItem}&quot;
+              </p>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-white/40 mt-3">
+              {assessment.insights.whatNotToFixYet.reasoning}
+            </p>
           </div>
         )}
       </main>

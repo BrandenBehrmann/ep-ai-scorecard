@@ -14,20 +14,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ena Score | Business Diagnostic",
-  description: "Discover what's really holding your business back. A comprehensive diagnostic across 6 dimensions that reveals hidden patterns and provides actionable insights.",
-  keywords: ["business diagnostic", "operational assessment", "business growth", "AI implementation", "operational health"],
+  title: "Revenue Friction Diagnostic | Ena Pragma",
+  description: "Identify the single constraint preventing effort from converting into revenue. A forced-prioritization diagnostic that ends debate and enables action.",
+  keywords: ["revenue friction", "business constraint", "operational diagnostic", "revenue conversion", "business bottleneck"],
   authors: [{ name: "Ena Pragma" }],
   openGraph: {
-    title: "Ena Score | Business Diagnostic",
-    description: "Discover what's really holding your business back. A comprehensive diagnostic that reveals hidden patterns and provides actionable insights.",
+    title: "Revenue Friction Diagnostic | Ena Pragma",
+    description: "Identify the single constraint preventing effort from converting into revenue. A forced-prioritization diagnostic that ends debate and enables action.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Ena Score | Business Diagnostic",
-    description: "Discover what's really holding your business back. Get actionable insights.",
+    title: "Revenue Friction Diagnostic | Ena Pragma",
+    description: "Identify the single constraint preventing effort from converting into revenue.",
   },
   robots: {
     index: false,

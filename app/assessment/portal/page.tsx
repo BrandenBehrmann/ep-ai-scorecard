@@ -1,5 +1,9 @@
 'use client';
 
+// app/assessment/portal/page.tsx
+// Revenue Friction Diagnostic - Assessment Portal
+// December 2025 - v2 pivot
+
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -35,7 +39,7 @@ function PortalLoading() {
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="w-8 h-8 text-amber-700 animate-spin mx-auto mb-4" />
-        <p className="text-gray-600 dark:text-white/70">Loading your assessment...</p>
+        <p className="text-gray-600 dark:text-white/70">Loading your diagnostic...</p>
       </div>
     </div>
   );
@@ -82,7 +86,7 @@ function AssessmentPortal() {
 
         if (!res.ok) {
           // Fallback to localStorage if API fails
-          const localData = localStorage.getItem('pragma-assessment');
+          const localData = localStorage.getItem('revenue-friction-diagnostic');
           if (localData) {
             const parsed = JSON.parse(localData);
             setAssessmentData(parsed);
@@ -144,7 +148,7 @@ function AssessmentPortal() {
         current_step: newStep !== undefined ? newStep : currentStep,
         status: 'in_progress'
       };
-      localStorage.setItem('pragma-assessment', JSON.stringify(localData));
+      localStorage.setItem('revenue-friction-diagnostic', JSON.stringify(localData));
     } catch (err) {
       console.error('Failed to save responses:', err);
       // Save to localStorage as fallback
@@ -154,7 +158,7 @@ function AssessmentPortal() {
         current_step: newStep !== undefined ? newStep : currentStep,
         status: 'in_progress'
       };
-      localStorage.setItem('pragma-assessment', JSON.stringify(localData));
+      localStorage.setItem('revenue-friction-diagnostic', JSON.stringify(localData));
     }
     setSaving(false);
   };
@@ -197,7 +201,7 @@ function AssessmentPortal() {
           current_step: assessmentSections.length,
           status: 'pending_review'
         };
-        localStorage.setItem('pragma-assessment', JSON.stringify(localData));
+        localStorage.setItem('revenue-friction-diagnostic', JSON.stringify(localData));
         // Redirect to thank you page instead of report
         router.push(`/assessment/submitted?token=${token}`);
         return;
@@ -209,17 +213,9 @@ function AssessmentPortal() {
   };
 
   // Response handlers
-  const handleResponse = (questionId: string, value: string | string[] | number) => {
+  const handleResponse = (questionId: string, value: string | number) => {
     const newResponses = { ...responses, [questionId]: value };
     setResponses(newResponses);
-  };
-
-  const handleMultiSelect = (questionId: string, option: string) => {
-    const current = (responses[questionId] as string[]) || [];
-    const updated = current.includes(option)
-      ? current.filter(o => o !== option)
-      : [...current, option];
-    handleResponse(questionId, updated);
   };
 
   if (!mounted || loading) {
@@ -227,7 +223,7 @@ function AssessmentPortal() {
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 text-amber-700 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-white/70">Loading your assessment...</p>
+          <p className="text-gray-600 dark:text-white/70">Loading your diagnostic...</p>
         </div>
       </div>
     );
@@ -240,10 +236,10 @@ function AssessmentPortal() {
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl text-red-600">!</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Assessment Not Found</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Diagnostic Not Found</h1>
           <p className="text-gray-600 dark:text-white/70 mb-6">{error}</p>
           <a href="/assessment/demo" className="px-6 py-3 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-all inline-block">
-            Start New Assessment
+            Start New Diagnostic
           </a>
         </div>
       </div>
@@ -273,7 +269,7 @@ function AssessmentPortal() {
                 />
               )}
               <span className="text-lg font-bold text-gray-900 dark:text-white">
-                Ena Score
+                Revenue Friction Diagnostic
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -405,40 +401,7 @@ function AssessmentPortal() {
                       </p>
                     )}
 
-                    {/* Scale Question */}
-                    {q.type === 'scale' && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-gray-400 dark:text-white/40">
-                          <span>{q.scaleLabels?.low}</span>
-                          <span>{q.scaleLabels?.high}</span>
-                        </div>
-                        <div className="flex gap-2 sm:gap-3">
-                          {[1, 2, 3, 4, 5].map((value) => (
-                            <label key={value} className="flex-1">
-                              <input
-                                type="radio"
-                                name={q.id}
-                                value={value}
-                                checked={responses[q.id] === value}
-                                onChange={() => handleResponse(q.id, value)}
-                                className="sr-only"
-                              />
-                              <div className={`
-                                h-12 rounded-lg border-2 flex items-center justify-center text-lg font-semibold cursor-pointer transition-all
-                                ${responses[q.id] === value
-                                  ? 'bg-amber-700 border-amber-700 text-white'
-                                  : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-white/60 hover:border-amber-400'
-                                }
-                              `}>
-                                {value}
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Text Question */}
+                    {/* Text Question - Primary type for v2 diagnostic */}
                     {q.type === 'text' && (
                       <textarea
                         value={(responses[q.id] as string) || ''}
@@ -449,7 +412,7 @@ function AssessmentPortal() {
                       />
                     )}
 
-                    {/* Select Question */}
+                    {/* Select Question - Used for profile questions */}
                     {q.type === 'select' && (
                       <div className="space-y-2">
                         {q.options?.map((option) => (
@@ -487,49 +450,6 @@ function AssessmentPortal() {
                         ))}
                       </div>
                     )}
-
-                    {/* Multi-select Question */}
-                    {q.type === 'multiselect' && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-500 dark:text-white/50">Select all that apply</p>
-                        <div className="grid sm:grid-cols-2 gap-2">
-                          {q.options?.map((option) => {
-                            const selected = ((responses[q.id] as string[]) || []).includes(option);
-                            return (
-                              <label
-                                key={option}
-                                className={`
-                                  flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all
-                                  ${selected
-                                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-700 dark:border-amber-600'
-                                    : 'border-gray-200 dark:border-white/10 hover:border-amber-400'
-                                  }
-                                `}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selected}
-                                  onChange={() => handleMultiSelect(q.id, option)}
-                                  className="sr-only"
-                                />
-                                <div className={`
-                                  w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0
-                                  ${selected
-                                    ? 'bg-amber-700 border-amber-700'
-                                    : 'border-gray-300 dark:border-white/30'
-                                  }
-                                `}>
-                                  {selected && (
-                                    <CheckCircle2 className="w-4 h-4 text-white" />
-                                  )}
-                                </div>
-                                <span className="text-sm text-gray-900 dark:text-white">{option}</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </div>
@@ -557,10 +477,10 @@ function AssessmentPortal() {
                     {saving ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating Report...
+                        Submitting...
                       </>
                     ) : (
-                      'Submit & View Report'
+                      'Submit Diagnostic'
                     )}
                   </button>
                 ) : (

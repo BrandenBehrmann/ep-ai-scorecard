@@ -106,7 +106,7 @@ function SubmittedContent() {
             <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Assessment Submitted!
+            Diagnostic Submitted!
           </h1>
           <p className="text-lg text-gray-600 dark:text-white/70">
             Thank you{assessmentData?.name ? `, ${assessmentData.name.split(' ')[0]}` : ''}. Your responses have been received.
@@ -127,10 +127,10 @@ function SubmittedContent() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                  1. AI Analysis In Progress
+                  1. Constraint Analysis
                 </h3>
                 <p className="text-gray-600 dark:text-white/70 text-sm">
-                  Our AI is analyzing your responses across all 6 dimensions to generate deep insights about your business operations.
+                  Your responses are being analyzed to identify the single constraint preventing effort from converting into revenue.
                 </p>
               </div>
             </div>
@@ -141,10 +141,10 @@ function SubmittedContent() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-                  2. Expert Review
+                  2. Diagnostic Generation
                 </h3>
                 <p className="text-gray-600 dark:text-white/70 text-sm">
-                  Our operations experts will review your AI-generated report and add personalized recommendations based on their experience.
+                  Based on your stated priority and supporting evidence, we generate a diagnostic that explains your bottleneck and paths forward.
                 </p>
               </div>
             </div>
@@ -158,7 +158,7 @@ function SubmittedContent() {
                   3. Report Delivery
                 </h3>
                 <p className="text-gray-600 dark:text-white/70 text-sm">
-                  You'll receive an email notification when your personalized Ena Score report is ready to view.
+                  You'll receive an email notification when your Revenue Friction Diagnostic is ready to view.
                 </p>
               </div>
             </div>

@@ -84,8 +84,8 @@ export default function StartAssessment() {
                 className="h-10 w-auto"
                 priority
               />
-              <span className="text-lg font-bold text-gray-900 dark:text-white">
-                Ena Score
+              <span className="text-lg font-bold text-gray-900 dark:text-white hidden sm:block">
+                Revenue Friction Diagnostic
               </span>
             </Link>
             <ThemeToggle />
@@ -106,10 +106,10 @@ export default function StartAssessment() {
             </Link>
 
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Start Your Assessment
+              Start Your Diagnostic
             </h1>
             <p className="text-gray-600 dark:text-white/60 mb-8">
-              Enter your details to begin the Ena Score diagnostic
+              Enter your details to begin the Revenue Friction Diagnostic
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -219,6 +219,41 @@ export default function StartAssessment() {
                 <Shield className="w-4 h-4" />
                 Secure checkout powered by Stripe
               </p>
+
+              {/* Demo bypass - only on localhost */}
+              {mounted && typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!name || !email || !company) {
+                      setError('Please fill in Name, Email, and Company first');
+                      return;
+                    }
+                    setLoading(true);
+                    setError('');
+                    try {
+                      const res = await fetch('/api/assessments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, company, phone }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.token) {
+                        window.location.href = `/assessment/portal?token=${data.token}`;
+                      } else {
+                        setError(data.error || 'Failed to create assessment');
+                        setLoading(false);
+                      }
+                    } catch {
+                      setError('Failed to create demo assessment');
+                      setLoading(false);
+                    }
+                  }}
+                  className="w-full py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-all text-sm"
+                >
+                  {loading ? 'Creating...' : '⚡ Skip Payment (Dev Only)'}
+                </button>
+              )}
             </form>
           </div>
 
@@ -232,7 +267,7 @@ export default function StartAssessment() {
               <div className="border-b border-gray-200 dark:border-white/10 pb-4 mb-4">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-gray-900 dark:text-white font-medium">
-                    Ena Score Assessment
+                    Revenue Friction Diagnostic
                   </span>
                   <span className="text-gray-900 dark:text-white font-semibold">
                     $1,500
@@ -251,31 +286,31 @@ export default function StartAssessment() {
                 <li className="flex items-start gap-3 text-sm">
                   <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Comprehensive diagnostic across 5 dimensions
+                    Identification of THE single constraint blocking revenue
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <Calculator className="w-5 h-5 text-teal-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Financial impact analysis using YOUR actual numbers
+                    Forced prioritization that ends debate
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <FileText className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Root cause diagnosis with actionable insights
+                    Supporting evidence from your own words
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    30-minute strategy session with our team
+                    Two clear paths: DIY or EP builds it for you
                   </span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <Clock className="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-600 dark:text-white/70">
-                    Implementation roadmap (DIY or EP builds it for you)
+                    No meetings required unless you want EP to implement
                   </span>
                 </li>
               </ul>
